@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Minlong Xie" />
+
+<meta name="date" content="2024-12-08" />
+
+<title>Random Forest Package Usage</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Random Forest Package Usage</h1>
+<h4 class="author">Minlong Xie</h4>
+<h4 class="date">2024-12-08</h4>
+
+
+
+<div id="简介" class="section level2">
+<h2>简介</h2>
+<p>本教程演示了如何使用 <code>SA24204128</code> 在 R
+中构建和使用随机森林分类器。我们将介绍如何训练一个决策树、训练一个随机森林，并使用训练好的模型进行预测。</p>
+</div>
+<div id="安装" class="section level2">
+<h2>安装</h2>
+<p>要安装该包，可以运行以下命令：</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SA24204128)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#install.packages(&quot;SA24204128&quot;)</span></span></code></pre></div>
+<p>训练单棵决策树 决策树是随机森林的基本组成部分。首先，我们将通过
+decision_tree_train 函数来训练一棵决策树。</p>
+<p>示例：训练一棵决策树</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># 加载 iris 数据集</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">data</span>(iris)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># 训练一棵决策树</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>tree <span class="ot">&lt;-</span> <span class="fu">decision_tree_train</span>(iris, <span class="at">target =</span> <span class="st">&quot;Species&quot;</span>, <span class="at">max_depth =</span> <span class="dv">5</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co"># 打印决策树结构</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="fu">print</span>(tree)</span></code></pre></div>
+<pre><code>## $feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $threshold
+## [1] 1.9
+## 
+## $left
+## [1] &quot;setosa&quot;
+## 
+## $right
+## $right$feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $right$threshold
+## [1] 1.7
+## 
+## $right$left
+## $right$left$feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $right$left$threshold
+## [1] 4.9
+## 
+## $right$left$left
+## $right$left$left$feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $right$left$left$threshold
+## [1] 1.6
+## 
+## $right$left$left$left
+## [1] &quot;versicolor&quot;
+## 
+## $right$left$left$right
+## [1] &quot;virginica&quot;
+## 
+## 
+## $right$left$right
+## $right$left$right$feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $right$left$right$threshold
+## [1] 1.5
+## 
+## $right$left$right$left
+## [1] &quot;virginica&quot;
+## 
+## $right$left$right$right
+## [1] &quot;versicolor&quot;
+## 
+## 
+## 
+## $right$right
+## $right$right$feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $right$right$threshold
+## [1] 4.8
+## 
+## $right$right$left
+## $right$right$left$feature
+## [1] &quot;Sepal.Length&quot;
+## 
+## $right$right$left$threshold
+## [1] 5.9
+## 
+## $right$right$left$left
+## [1] &quot;versicolor&quot;
+## 
+## $right$right$left$right
+## [1] &quot;virginica&quot;
+## 
+## 
+## $right$right$right
+## [1] &quot;virginica&quot;</code></pre>
+<p>decision_tree_train 函数根据提供的数据集（这里是 iris
+数据集）和目标变量（Species）来训练一棵决策树。树的深度通过 max_depth
+参数进行限制。</p>
+<p>函数解释 decision_tree_train
+函数通过递归分裂来构建决策树。在每个节点，它选择最好的特征来进行分裂（通常使用
+Gini 不纯度来选择），并在达到最大深度或其他停止条件时停止。</p>
+<p>训练随机森林 现在我们已经训练了一棵决策树，接下来我们将使用
+randomForest_train
+函数来训练一个随机森林。随机森林是由多棵决策树组成的集成学习方法。</p>
+<p>示例：训练随机森林</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># 训练一个包含 100 棵树的随机森林</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>forest <span class="ot">&lt;-</span> <span class="fu">randomForest_train</span>(iris, <span class="at">target =</span> <span class="st">&quot;Species&quot;</span>, <span class="at">n_trees =</span> <span class="dv">100</span>, <span class="at">max_depth =</span> <span class="dv">5</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">min</span>(<span class="dv">3</span>, <span class="fu">length</span>(forest))) {  <span class="co"># 打印最多前 3 棵树</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Tree&quot;</span>, i, <span class="st">&quot;Root Node:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="fu">print</span>(forest[[i]])  <span class="co"># 打印根节点</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>}</span></code></pre></div>
+<pre><code>## Tree 1 Root Node:
+## $feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $threshold
+## [1] 1.9
+## 
+## $left
+## [1] &quot;setosa&quot;
+## 
+## $right
+## $right$feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $right$threshold
+## [1] 4.8
+## 
+## $right$left
+## $right$left$feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $right$left$threshold
+## [1] 1.5
+## 
+## $right$left$left
+## [1] &quot;versicolor&quot;
+## 
+## $right$left$right
+## $right$left$right$feature
+## [1] &quot;Sepal.Width&quot;
+## 
+## $right$left$right$threshold
+## [1] 3
+## 
+## $right$left$right$left
+## [1] &quot;virginica&quot;
+## 
+## $right$left$right$right
+## [1] &quot;versicolor&quot;
+## 
+## 
+## 
+## $right$right
+## $right$right$feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $right$right$threshold
+## [1] 1.5
+## 
+## $right$right$left
+## $right$right$left$feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $right$right$left$threshold
+## [1] 4.9
+## 
+## $right$right$left$left
+## [1] &quot;versicolor&quot;
+## 
+## $right$right$left$right
+## [1] &quot;virginica&quot;
+## 
+## 
+## $right$right$right
+## [1] &quot;virginica&quot;
+## 
+## 
+## 
+## 
+## Tree 2 Root Node:
+## $feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $threshold
+## [1] 1.7
+## 
+## $left
+## $left$feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $left$threshold
+## [1] 1.9
+## 
+## $left$left
+## [1] &quot;setosa&quot;
+## 
+## $left$right
+## $left$right$feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $left$right$threshold
+## [1] 5
+## 
+## $left$right$left
+## $left$right$left$feature
+## [1] &quot;Sepal.Length&quot;
+## 
+## $left$right$left$threshold
+## [1] 4.9
+## 
+## $left$right$left$left
+## [1] &quot;versicolor&quot;
+## 
+## $left$right$left$right
+## [1] &quot;versicolor&quot;
+## 
+## 
+## $left$right$right
+## $left$right$right$feature
+## [1] &quot;Sepal.Length&quot;
+## 
+## $left$right$right$threshold
+## [1] 6
+## 
+## $left$right$right$left
+## [1] &quot;versicolor&quot;
+## 
+## $left$right$right$right
+## [1] &quot;virginica&quot;
+## 
+## 
+## 
+## 
+## $right
+## $right$feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $right$threshold
+## [1] 4.8
+## 
+## $right$left
+## $right$left$feature
+## [1] &quot;Sepal.Length&quot;
+## 
+## $right$left$threshold
+## [1] 5.9
+## 
+## $right$left$left
+## [1] &quot;versicolor&quot;
+## 
+## $right$left$right
+## [1] &quot;virginica&quot;
+## 
+## 
+## $right$right
+## [1] &quot;virginica&quot;
+## 
+## 
+## 
+## Tree 3 Root Node:
+## $feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $threshold
+## [1] 1.9
+## 
+## $left
+## [1] &quot;setosa&quot;
+## 
+## $right
+## $right$feature
+## [1] &quot;Petal.Length&quot;
+## 
+## $right$threshold
+## [1] 4.9
+## 
+## $right$left
+## $right$left$feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $right$left$threshold
+## [1] 1.6
+## 
+## $right$left$left
+## [1] &quot;versicolor&quot;
+## 
+## $right$left$right
+## $right$left$right$feature
+## [1] &quot;Sepal.Length&quot;
+## 
+## $right$left$right$threshold
+## [1] 5.9
+## 
+## $right$left$right$left
+## [1] &quot;versicolor&quot;
+## 
+## $right$left$right$right
+## [1] &quot;virginica&quot;
+## 
+## 
+## 
+## $right$right
+## $right$right$feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $right$right$threshold
+## [1] 1.7
+## 
+## $right$right$left
+## $right$right$left$feature
+## [1] &quot;Petal.Width&quot;
+## 
+## $right$right$left$threshold
+## [1] 1.6
+## 
+## $right$right$left$left
+## [1] &quot;virginica&quot;
+## 
+## $right$right$left$right
+## [1] &quot;versicolor&quot;
+## 
+## 
+## $right$right$right
+## [1] &quot;virginica&quot;</code></pre>
+<p>在这个示例中，我们训练了一个包含 100
+棵树的随机森林。每棵树使用了数据的 bootstrap
+样本，并且在每个节点分裂时随机选择特征。</p>
+<p>函数解释 randomForest_train
+函数接受输入数据，训练指定数量的决策树（n_trees）。每棵树基于数据的自助法采样（bootstrapping），并在每个节点的分裂时使用随机的特征子集（mtry）。这种随机性使得随机森林比单棵决策树更具鲁棒性，能够减少过拟合。</p>
+<p>使用随机森林进行预测 训练好随机森林后，我们可以使用
+randomForest_predict
+函数在新的数据上进行预测。该函数通过投票机制汇总所有决策树的预测结果，给出最终的分类预测。</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># 加载必要包</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">library</span>(randomForest)  <span class="co"># 或者 library(ranger)</span></span></code></pre></div>
+<pre><code>## Warning: package &#39;randomForest&#39; was built under R version 4.4.2</code></pre>
+<pre><code>## randomForest 4.7-1.2</code></pre>
+<pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<pre><code>## 
+## Attaching package: &#39;randomForest&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
+## 
+##     margin</code></pre>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># 加载 iris 数据集</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">data</span>(iris)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co"># 数据集划分</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">14634</span>)  <span class="co"># 设置随机种子以保证可重复性</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>train_indices <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(iris), <span class="fl">0.7</span> <span class="sc">*</span> <span class="fu">nrow</span>(iris))  <span class="co"># 70% 用于训练</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>train_data <span class="ot">&lt;-</span> iris[train_indices, ]</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> iris[<span class="sc">-</span>train_indices, ]</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co"># 1. 使用SA24204128</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co"># 测量训练时间</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>time_custom_train <span class="ot">&lt;-</span> <span class="fu">system.time</span>({</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  forest_custom <span class="ot">&lt;-</span> <span class="fu">randomForest_train</span>(train_data, <span class="at">target =</span> <span class="st">&quot;Species&quot;</span>, <span class="at">n_trees =</span> <span class="dv">100</span>, <span class="at">max_depth =</span> <span class="dv">10</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>})</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co"># 测量预测时间</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>time_custom_predict <span class="ot">&lt;-</span> <span class="fu">system.time</span>({</span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  predictions_custom <span class="ot">&lt;-</span> <span class="fu">randomForest_predict</span>(forest_custom, test_data[, <span class="sc">-</span><span class="dv">5</span>])</span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>})</span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co"># 计算准确性</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a>accuracy_custom <span class="ot">&lt;-</span> <span class="fu">mean</span>(predictions_custom <span class="sc">==</span> test_data<span class="sc">$</span>Species)</span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co"># 2. 使用 randomForest 包</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co"># 测量训练时间</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a>time_rf_train <span class="ot">&lt;-</span> <span class="fu">system.time</span>({</span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>  forest_rf <span class="ot">&lt;-</span> <span class="fu">randomForest</span>(Species <span class="sc">~</span> ., <span class="at">data =</span> train_data, <span class="at">ntree =</span> <span class="dv">100</span>, <span class="at">maxnodes =</span> <span class="dv">10</span>)</span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>})</span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co"># 测量预测时间</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>time_rf_predict <span class="ot">&lt;-</span> <span class="fu">system.time</span>({</span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a>  predictions_rf <span class="ot">&lt;-</span> <span class="fu">predict</span>(forest_rf, test_data[, <span class="sc">-</span><span class="dv">5</span>])</span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a>})</span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co"># 计算准确性</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a>accuracy_rf <span class="ot">&lt;-</span> <span class="fu">mean</span>(predictions_rf <span class="sc">==</span> test_data<span class="sc">$</span>Species)</span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="co"># 3. 输出对比结果</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">&quot;Custom Random Forest&quot;</span>, <span class="st">&quot;randomForest Package&quot;</span>),</span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a>  <span class="at">Training_Time =</span> <span class="fu">c</span>(time_custom_train[<span class="st">&quot;elapsed&quot;</span>], time_rf_train[<span class="st">&quot;elapsed&quot;</span>]),</span>
+<span id="cb12-42"><a href="#cb12-42" tabindex="-1"></a>  <span class="at">Prediction_Time =</span> <span class="fu">c</span>(time_custom_predict[<span class="st">&quot;elapsed&quot;</span>], time_rf_predict[<span class="st">&quot;elapsed&quot;</span>]),</span>
+<span id="cb12-43"><a href="#cb12-43" tabindex="-1"></a>  <span class="at">Accuracy =</span> <span class="fu">c</span>(accuracy_custom, accuracy_rf)</span>
+<span id="cb12-44"><a href="#cb12-44" tabindex="-1"></a>)</span>
+<span id="cb12-45"><a href="#cb12-45" tabindex="-1"></a></span>
+<span id="cb12-46"><a href="#cb12-46" tabindex="-1"></a><span class="fu">print</span>(results)</span></code></pre></div>
+<pre><code>##                 Method Training_Time Prediction_Time  Accuracy
+## 1 Custom Random Forest          1.38            0.04 0.9333333
+## 2 randomForest Package          0.00            0.00 0.9777778</code></pre>
+<p>结论 在本教程中，我们演示了如何：</p>
+<p>使用 decision_tree_train 函数训练一棵决策树。 使用 randomForest_train
+函数构建一个随机森林。 使用训练好的随机森林通过 randomForest_predict
+进行预测。
+随机森林是一种强大的分类工具，结合了多棵决策树的优势。通过集成多个决策树，随机森林模型通常比单棵决策树更具鲁棒性，能够有效减少过拟合。</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

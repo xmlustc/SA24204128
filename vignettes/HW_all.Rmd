@@ -1,0 +1,2161 @@
+---
+title: "All homework"
+author: "Minlong Xie"
+date: "2024-12-08"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{All homework}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+**HW0**
+
+  Use knitr to produce at least 3 examples. For each example, texts should mix with figures and/or tables. Better to have mathematical formulas
+  
+# 1、正态分布
+
+我们生成一个均值为0，标准差为1的标准正态分布：
+$$
+X ∼ N(0,1)
+$$
+**R代码**
+```{r}
+set.seed(123)
+data <- rnorm(1000, mean = 0, sd = 1)
+hist(data, breaks = 30, main = "正态分布直方图", xlab = "值", ylab = "频数")
+```
+
+从图中可以看出，正态分布的数据大致呈钟形分布。
+
+# 2、比较两组数据的描述性统计量
+
+我们比较两组数据的均值、标准差、中位数、最小值、最大值，这两组数据分别来自于：
+$$
+X∼N(5,2)\\
+Y∼N(10,3)
+$$
+**R代码**
+```{r}
+set.seed(1213)
+group_a <- rnorm(50, mean = 5, sd = 2)
+group_b <- rnorm(50, mean = 10, sd = 3)
+data_summary <- data.frame(
+  Group = c("A", "B"),
+  Mean = c(mean(group_a), mean(group_b)),
+  SD = c(sd(group_a), sd(group_b)),
+  Median = c(median(group_a), median(group_b)),
+  Min = c(min(group_a), min(group_b)),
+  Max = c(max(group_a), max(group_b))
+)
+knitr::kable(data_summary, caption = "组A和组B的描述性统计量")
+```
+
+
+从上表可以看出，两组数据的描述性统计量各不相同，其中样本均值和样本方差都与各自的总体均值和总体方差较为接近。
+
+# 3、回归分析
+
+我们使用线性回归模型来分析变量$x$和$y$之间的关系。假设关系为：
+$$
+y=\beta_0+\beta_1x+ϵ
+$$
+其中$ϵ$为随机误差，假设服从正态分布。
+
+**R代码**
+```{r}
+set.seed(123)
+x <- rnorm(100, mean = 5, sd = 2)
+y <- 2 + 1.5 * x + rnorm(100)
+plot(x, y, main = "散点图与回归直线", xlab = "X", ylab = "Y")
+model <- lm(y ~ x)
+abline(model, col = "red")
+summary(model)
+```
+
+从$x$和$y$的散点图可以看出，它们的关系大致为线性关系，我们进行线性回归分析，得到的回归结果为：
+$$
+\hat{y}=2.028+1.474x
+$$
+即$\hat{\beta_0}=2.028,\hat{\beta_1}=1.474$。线性回归模型的$R^2=0.8859$，且系数都通过了显著性检验。
+
+**HW1**
+
+**3.4** The Rayleigh density [156, Ch. 18] is
+$$
+f(x)=\frac{x}{\sigma^2}e^{-x^2/(2\sigma^2)},~~~x\geq 0,~\sigma>0.
+$$
+
+Develop an algorithm to generate random samples from a Rayleigh($σ$) distribution. Generate Rayleigh($σ$) samples for several choices of $σ>0$ and check that the mode of the generated samples is close to the theoretical mode $σ$ (check the histogram).
+
+**解题思路**
+
+(1)首先计算Rayleigh($σ$)的分布函数，为：
+$$
+F(x)=1-e^{-x^2/(2\sigma^2)}
+$$
+
+(2)利用反函数变换方法生成Rayleigh($σ$)分布的随机数：
+$$
+X=\sigma\sqrt{-2\ln (1-U)}
+$$
+其中$U\sim U(0,1)$。
+
+(3)绘制频率分布直方图并与真实的Rayleigh($σ$)分布进行比较
+
+**R代码**
+```{r}
+set.seed(1212)   #设置随机种子
+
+# Rayleigh分布随机数生成函数
+generate_rayleigh <- function(n, sigma) {
+  u <- runif(n)  # 生成n个(0,1)之间的均匀分布随机数
+  x <- sigma * sqrt(-2 * log(1 - u))
+  return(x)
+}
+
+# 设置不同的sigma值
+sigma_values <- c(1, 2, 3)
+par(mfrow = c(1, length(sigma_values)))  # 设置多图排列
+
+# 对每个sigma值生成样本并绘制直方图
+for (sigma in sigma_values) {
+  samples <- generate_rayleigh(1000, sigma)
+  
+  # 绘制样本的直方图，并标出理论峰值sigma
+  hist(samples, breaks = 30, main = paste("Rayleigh分布 (σ =", sigma, ")"),
+       xlab = "值", ylab = "频率/组距", probability = TRUE)
+  abline(v = sigma, col = "red", lwd = 2, lty = 2)  # 理论峰值
+  
+  # 叠加真实的Rayleigh分布密度函数
+  curve((x / sigma^2) * exp(-x^2 / (2 * sigma^2)), 
+        from = 0, to = max(samples), add = TRUE, col = "blue", lwd = 2)
+}
+
+par(mfrow = c(1, 1))  # 恢复图形布局
+```
+
+  从以上三个频率分布直方图可以看出，反函数变换法生成的 Rayleigh($σ$) 分布与真实的Rayleigh($σ$)分布接近。
+
+**3.11** Generate a random sample of size 1000 from a normal location mixture. The components of the mixture have $N(0,1)$ and $N(3,1)$ distributions with mixing probabilities $p_1$ and $p_2 =1− p_1$. Graph the histogram of the sample with density superimposed, for $p_1 =0.75$. Repeat with different values for $p_1$ and observe whether the empirical distribution of the mixture appears to be bimodal. Make a conjecture about the values of $p_1$ that produce bimodal mixtures.
+
+**解题思路**
+
+(1)设置不同的$p_1$值(0.25, 0.4, 0.5, 0.6, 0.75)生成正态分布的混合分布
+
+(2)绘制混合分布的频率分布直方图
+
+(3)观察直方图的形状是否有双峰
+
+**R代码**
+```{r fig.width=7, fig.height=5}
+set.seed(1212)   #设置随机种子
+
+# 正态混合分布样本生成函数
+generate_mixture <- function(n, p1) {
+  # 生成1000个0和1的样本，以概率p1生成0，其余生成1
+  component <- rbinom(n, 1, p1)
+  # 根据component选择分布N(0,1)或N(3,1)
+  sample <- ifelse(component == 0, rnorm(n, 0, 1), rnorm(n, 3, 1))
+  return(sample)
+}
+
+# 设置初始的p1值
+p1_values <- c(0.25, 0.4, 0.5, 0.6, 0.75)
+par(mfrow = c(1, length(p1_values)))  # 设置多图排列
+
+# 对不同的p1值生成样本并绘制直方图
+for (p1 in p1_values) {
+  samples <- generate_mixture(1000, p1)
+  
+  # 绘制样本直方图
+  hist(samples, breaks = 30, probability = TRUE, 
+       main = paste("Normal Mixture (p1 =", p1, ")"),
+       xlab = "值", ylab = "频率/组距")
+  
+}
+
+par(mfrow = c(1, 1))  # 恢复图形布局
+```
+
+从以上频率分布直方图的形状可以看出，$p_1$的值越接近0.5，分布的形状越接近双峰，因此猜测产生双峰的最合适$p_1$值为0.5。
+
+**3.20** A compound Poisson process is a stochastic process ${X(t),t≥ 0}$ that can be represented as the random sum $X(t)=\sum\limits _{i=1}^{N(t)} Y_i, t≥ 0$, where ${N(t),t≥ 0}$ is a Poisson process and $Y_1,Y_2$,... are iid and independent of ${N(t),t≥ 0}$. Write a program to simulate a compound Poisson($λ$)–Gamma process ($Y$ has a Gamma distribution). Estimate the mean and the variance of $X(10)$ for several choices of the parameters and compare with the theoretical values. Hint: Show that $E[X(t)] = λtE[Y1]$ and $Var(X(t)) = λtE[Y^2_1]$.
+
+**解题思路**
+
+(1)首先证明复合泊松过程的均值和方差公式：
+$$
+\begin{align}
+E[X(t)]
+&=E(E(\sum\limits _{i=1}^{N(t)} Y_i|N(t)))\\
+&=\sum\limits^{\infty}_{n=0}E(\sum\limits _{i=1}^{N(t)} Y_i|N(t)=n)P(N(t)=n)\\
+&=\sum\limits^{\infty}_{n=0}E(\sum\limits _{i=1}^{n} Y_i|N(t)=n)P(N(t)=n)\\
+&=\sum\limits^{\infty}_{n=0}nEY_1P(N(t)=n)\\
+&=EY_1\sum\limits^{\infty}_{n=0}nP(N(t)=n)\\
+&=\lambda t EY_1
+\end{align}
+$$
+$$
+\begin{align}
+E[X(t)]^2
+&=E(E((\sum\limits _{i=1}^{N(t)} Y_i)^2|N(t)))\\
+&=\sum\limits^{\infty}_{n=0}E((\sum\limits _{i=1}^{N(t)} Y_i)^2|N(t)=n)P(N(t)=n)\\
+&=\sum\limits^{\infty}_{n=0}E((\sum\limits _{i=1}^{n} Y_i)^2|N(t)=n)P(N(t)=n)\\
+&=\sum\limits^{\infty}_{n=0}(Var(\sum\limits _{i=1}^{n} Y_i)+(E\sum\limits _{i=1}^{n} Y_i)^2)P(N(t)=n)\\
+&=(EY_1)^2\sum\limits^{\infty}_{n=0}n^2P(N(t)=n)+Var(Y_1)\sum\limits^{\infty}_{n=0}nP(N(t)=n)\\
+&=(\lambda^2 t^2+\lambda t)(EY_1)^2+\lambda t Var(Y_1)
+\end{align}
+$$
+从而
+$$
+Var(X(t))=E[X(t)]^2-(E[X(t)])^2=\lambda t(EY_1)^2+\lambda t Var(Y_1)=\lambda tEY_1^2
+$$
+(2)设置几组参数并模拟复合泊松-伽马过程
+
+(3)对均值和方差的估计值与理论值进行比较
+
+**R代码**
+```{r}
+set.seed(1213)  # 设置随机种子
+
+# 复合泊松-伽马过程模拟函数
+simulate_compound_poisson_gamma <- function(lambda, alpha, beta, t, num_simulations) {
+  results <- numeric(num_simulations)
+  
+  for (i in 1:num_simulations) {
+    # 生成泊松过程的事件数量
+    N_t <- rpois(1, lambda * t)
+    
+    # 如果N_t > 0，则生成N_t个Gamma(alpha, beta)随机变量并求和
+    if (N_t > 0) {
+      Y <- rgamma(N_t, shape = alpha, scale = beta)
+      results[i] <- sum(Y)
+    } else {
+      results[i] <- 0  # 如果N_t = 0，则X(t) = 0
+    }
+  }
+  
+  return(results)
+}
+
+# 参数设置
+parameter_sets <- list(
+  list(lambda = 2, alpha = 3, beta = 1.5),
+  list(lambda = 3, alpha = 2, beta = 2.0),
+  list(lambda = 1, alpha = 4, beta = 0.8)
+)
+
+# 模拟参数
+t <- 10
+num_simulations <- 10000
+results <- data.frame()
+
+# 对每一组参数进行模拟和理论计算
+for (params in parameter_sets) {
+  lambda <- params$lambda
+  alpha <- params$alpha
+  beta <- params$beta
+  
+  # 模拟复合泊松过程
+  simulated_values <- simulate_compound_poisson_gamma(lambda, alpha, beta, t, num_simulations)
+  
+  # 计算模拟均值和方差
+  simulated_mean <- mean(simulated_values)
+  simulated_variance <- var(simulated_values)
+  
+  # 计算理论均值和方差
+  theoretical_mean <- lambda * t * alpha * beta
+  theoretical_variance <- lambda * t * (alpha * beta^2 + (alpha * beta)^2)
+  
+  # 将结果添加到数据框
+  results <- rbind(results, data.frame(
+    Lambda = lambda,
+    Alpha = alpha,
+    Beta = beta,
+    Simulated_Mean = simulated_mean,
+    Theoretical_Mean = theoretical_mean,
+    Simulated_Variance = simulated_variance,
+    Theoretical_Variance = theoretical_variance
+  ))
+}
+
+# 打印结果表格
+print(results)
+```
+
+ 从以上输出结果可以看出，在不同的参数组合下，模拟复合泊松
+ -伽马过程的均值和方差与理论值非常接近。
+
+
+**HW2**
+
+
+_5.4_ Write a function to compute a Monte Carlo estimate of the Beta(3, 3) cdf, and use the function to estimate F(x) for x =0.1,0.2,...,0.9. Compare the estimates with the values returned by the pbeta function in R.
+
+**解题思路**：
+
+（1）编写一个估计Beta(3, 3)分布函数的函数
+$Beta(\alpha,\beta)=\frac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha+\beta)}$，
+Beta(3, 3)的分布函数为：
+
+$F(x)=\int_0^x\frac{1}{Beta(3,3)}t^{2}(1-t)^2dt=30\int_0^xt^{2}(1-t)^2dt$
+
+从而$F(x)=30E_Y[xe^{Y^2(1-Y)^2}],Y\sim U(0,x)$，
+
+进而估计函数$\hat{F}(x)=\frac{30}{m}\displaystyle\sum_{i=1}^{m}xe^{Y^2_i(1-Y_i)^2}$,其中$Y_1,Y_2,...,Y_m~ i.i.d.\sim U(0,x)$
+
+（2）计算当 x 取0.1,0.2,...,0.9时估计函数的值
+
+（3）与真实值进行比较
+
+
+**R代码**：
+```{r}
+# 设置随机种子以便结果可重现
+set.seed(1212)
+# 设置参数
+m <- 1e5
+alpha <- 3
+beta <- 3
+r <- gamma(alpha + beta) / (gamma(alpha) * gamma(beta))
+
+# 定义 f 函数
+f <- function(x, y) {
+  r * x * (y^(alpha - 1) * (1 - y)^(beta - 1))
+}
+
+# 要计算的 x 值
+x_values <- seq(0.1, 0.9, by = 0.1)
+
+# 生成随机样本
+y_values <- lapply(x_values, function(x) runif(m, min = 0, max = x))
+
+# 计算每个 x 的蒙特卡洛估计
+monte_carlo_estimates <- sapply(1:length(x_values), function(i) {
+  mean(f(x_values[i], y_values[[i]]))
+})
+
+# 计算实际的 CDF 值
+actual_cdf_values <- pbeta(x_values, shape1 = alpha, shape2 = beta)
+
+# 合并结果到数据框
+results <- data.frame(
+  x = x_values,
+  monte_carlo_estimate = monte_carlo_estimates,
+  actual_cdf_value = actual_cdf_values
+)
+
+# 输出结果
+print(results)
+```
+由上表可以看出，使用蒙特卡洛方法计算得到的Beta(3,3)分布的累计密度函数的估计函数与真实函数在不同的$x$取值下差异较小。
+
+
+_5.9_ The Rayleigh density [156, (18.76)] is
+$f(x)=\frac{x}{\sigma^2}e^{-x^2/(2\sigma^2)},~~x\geq0,\sigma>0.$
+Implement a function to generate samples from a Rayleigh($\sigma$) distribution, using antithetic variables. What is the percent reduction in variance of $\frac{X+X'}{2}$ compared with $\frac{X_1+X_2}{2}$ for independent $X_1,X_2$?
+
+**解题思路**：
+
+（1）利用逆变换方法生成Rayleigh分布
+由Rayleigh分布的概率密度函数表达式，可以得到其累计密度函数公式：
+$F(x)=\int_0^x\frac{t}{\sigma^2}e^{-t^2/(2\sigma^2)}=1-e^{-\frac{x^2}{2\sigma^2}}$
+
+从而$F^{-1}(x)=\sigma\sqrt{-2\ln(1-x)}$,
+则$X=\sigma\sqrt{-2\ln(1-U)}=\sigma\sqrt{-2\ln(U)}$，其中$U\sim U(0,1)$，$X\sim Rayleigh(\sigma)$
+
+（2）从Rayleigh分布中抽样，计算利用对偶变量和独立变量生成的方差
+$X$的对偶变量为$X'=\sigma\sqrt{-2\ln(1-U)}$
+独立变量
+$X_i=\sigma\sqrt{-2\ln(1-U_i)}$，其中$U_i\sim U(0,1),~i=1,2$，且$U、U_1、U_2$独立
+
+（3）计算利用对偶变量的方差减小率
+方差减小率=(独立样本方差-对偶样本方差)/独立样本方差*100%
+
+**R代码**：
+```{r}
+# 设置随机种子以便结果可重现
+set.seed(1212)
+# 生成 Rayleigh 分布样本的函数
+rayleigh_sample <- function(sigma, size) {
+  U <- runif(size)  # 生成 U(0,1) 的随机数
+  return(sigma * sqrt(-2 * log(U)))  # 通过逆变换法生成 Rayleigh 样本
+}
+
+# 使用对偶变量生成 Rayleigh 样本
+rayleigh_antithetic <- function(sigma, size) {
+  U <- runif(size)  # 生成 U(0,1) 的随机数
+  X <- sigma * sqrt(-2 * log(U))  # 原始 Rayleigh 样本
+  X_prime <- sigma * sqrt(-2 * log(1 - U))  # 对偶 Rayleigh 样本
+  return(list(X = X, X_prime = X_prime))  # 返回一对对偶变量
+}
+# 计算方差减小率
+variance_reduction <- function(sigma, size) {
+  # 生成独立的样本
+  X1 <- rayleigh_sample(sigma, size)
+  X2 <- rayleigh_sample(sigma, size)
+  independent_mean <- (X1 + X2) / 2  # 计算独立样本的平均值
+  
+  # 生成对偶变量样本
+  antithetic_samples <- rayleigh_antithetic(sigma, size)
+  X <- antithetic_samples$X
+  X_prime <- antithetic_samples$X_prime
+  antithetic_mean <- (X + X_prime) / 2  # 计算对偶变量的平均值
+  
+  # 计算方差
+  var_independent <- var(independent_mean)
+  var_antithetic <- var(antithetic_mean)
+  
+  # 计算方差减小率
+  reduction <- 100 * (var_independent - var_antithetic) / var_independent
+  return(list(reduction = reduction, var_independent = var_independent, var_antithetic = var_antithetic))
+}
+
+# 运行示例
+sigma <- 1
+size <- 1e5
+result <- variance_reduction(sigma, size)
+
+cat("独立样本的方差:", result$var_independent, "\n")
+cat("对偶样本的方差:", result$var_antithetic, "\n")
+cat("方差减小率:", result$reduction, "%\n")
+
+```
+从以上结果可以看出，当$\sigma=1$时，使用对偶样本使方差降低了近95%（样本量取100000），方差减少效果显著。
+
+_5.13_ Find two importance functions $f_1$ and $f_2$ that are supported on $(1,\infty)$ and are ‘close’ to
+$g(x)=\frac{x^2}{\sqrt{2\pi}}e^{-x^2/2},~~x>1.$
+Which of your two importance functions should produce the smaller variance in estimating
+$\int_1^{\infty}\frac{x^2}{\sqrt{2\pi}}e^{-x^2/2}dx$
+by importance sampling? Explain.
+
+**解题思路**：
+
+（1）选取两个与$g(x)$形式接近的函数
+选取标准正态分布的概率密度函数：
+$f_1(x)=\frac{1}{\sqrt{2\pi}}e^{-x^2/2}$
+选取Rayleigh(1)的概率密度函数：
+$f_2(x)=xe^{-x^2/2}$
+
+（2）对$\int_1^{\infty}\frac{x^2}{\sqrt{2\pi}}e^{-x^2/2}dx$进行估计
+$I_1=\frac{1}{n}\displaystyle\sum_{i=1}^n\frac{g(x_i)I(x_i>1)}{f_1(x_i)}$
+$I_2=\frac{1}{n}\displaystyle\sum_{i=1}^n\frac{g(x_i)I(x_i>1)}{f_2(x_i)}$
+
+（3）比较两个估计方法的方差
+
+**代码**
+```{r}
+# 设置随机种子以便结果可重现
+set.seed(1212)
+
+# 定义 g(x)
+g <- function(x) {
+  ifelse(x < 1, 0, (x^2 / sqrt(2 * pi)) * exp(-x^2 / 2))
+}
+
+# 定义 f1(x) 和 f2(x)
+f1 <- function(x) {
+  (1 / sqrt(2 * pi)) * exp(-x^2 / 2)
+}
+
+f2 <- function(x) {
+  x * exp(-x^2 / 2)
+}
+
+# 生成 Rayleigh 分布样本的函数
+rayleigh_sample <- function(sigma, size) {
+  U <- runif(size)  # 生成 U(0,1) 的随机数
+  return(sigma * sqrt(-2 * log(U)))  # 通过逆变换法生成 Rayleigh 样本
+}
+
+# 从 f1 和 f2 中生成样本
+sample_from_f1 <- function(n) {
+  rnorm(n, mean = 0, sd = 1)  # 从正态分布中生成样本
+}
+
+sample_from_f2 <- function(n) {
+  rayleigh_sample(sigma = 1, size = n)  # 使用自定义函数生成Rayleigh样本
+}
+
+# 进行重要性采样
+n <- 100000  # 样本大小
+num_runs <- 100  # 重复次数
+II1_values <- numeric(num_runs)
+II2_values <- numeric(num_runs)
+
+for (i in 1:num_runs) {
+  tt1 <- sample_from_f1(n)
+  I1 <- g(tt1) / f1(tt1)
+  II1_values[i] <- mean(I1)
+  
+  tt2 <- sample_from_f2(n)
+  I2 <- g(tt2) / f2(tt2)
+  II2_values[i] <- mean(I2)
+}
+
+# 计算方差
+var_II1 <- var(II1_values)
+var_II2 <- var(II2_values)
+
+# 输出结果
+cat("Estimate using f1:", mean(II1_values), "\n")
+cat("Variance using f1:", var_II1, "\n")
+cat("Estimate using f2:", mean(II2_values), "\n")
+cat("Variance using f2:", var_II2, "\n")
+
+# 真实的积分值（可以通过数值积分计算）
+true_value <- integrate(g, lower = 1, upper = Inf)$value
+cat("True value of the integral:", true_value, "\n")
+
+```
+从以上结果可以看出，选取的两个重要性函数$f_1(x)=\frac{1}{\sqrt{2\pi}}e^{-x^2/2}$和$f_2(x)=xe^{-x^2/2}$最后得到的$\int_1^{\infty}\frac{x^2}{\sqrt{2\pi}}e^{-x^2/2}dx$估计值都与真实值较为接近，而选取$f_2(x)=xe^{-x^2/2}$作为重要性函数的估计方差更小（小了一个数量级），且估计值更接近真实值。
+
+_Monte Carlo experiment_
+ For $n = 10^4,2×10^4,4×10^4,6×10^4,8×10^4$, apply the fast sorting algorithm to randomly permuted numbers of 1,...,n.
+ Calculate computation time averaged over 100 simulations, denoted by $a_n$.
+ Regress $a_n$ on $t_n := nlog(n)$, and graphically show the results (scatter plot and regression line).
+
+**解题思路**
+
+（1）利用快速排序算法对$n = 10^4,2×10^4,4×10^4,6×10^4,8×10^4$这五种情况进行排序
+
+（2）计算100次模拟的平均时间
+
+（3）对$a_n$和$t_n := nlog(n)$进行回归并绘制图像
+
+**R代码**
+```{r}
+# 加载必要的库
+library(ggplot2)
+# 设置随机种子以便结果可重现
+set.seed(1212)
+# 快速排序算法
+quicksort <- function(arr) {
+  if(length(arr) <= 1) {
+    return(arr)
+  }
+  
+  pivot <- arr[sample(length(arr), 1)]  # 随机选择一个枢轴
+  left <- arr[arr < pivot]
+  right <- arr[arr > pivot]
+  
+  return(c(quicksort(left), pivot, quicksort(right)))
+}
+
+# 运行蒙特卡洛实验的函数
+run_experiment <- function(n, simulations = 100) {
+  times <- numeric(simulations)
+  
+  for (i in 1:simulations) {
+    permuted_numbers <- sample(1:n, n)  # 生成随机排列
+    start_time <- Sys.time()  # 开始计时
+    quicksort(permuted_numbers)  # 排序
+    end_time <- Sys.time()  # 结束计时
+    times[i] <- as.numeric(difftime(end_time, start_time, units = "secs"))
+  }
+  
+  return(mean(times))  # 返回平均时间
+}
+
+# 测试的 n 值
+n_values <- c(10^4, 2 * 10^4, 4 * 10^4, 6 * 10^4, 8 * 10^4)
+results <- data.frame(n = n_values, a_n = NA)
+
+# 对每个 n 运行实验
+for (n in n_values) {
+  results$a_n[results$n == n] <- run_experiment(n)
+}
+
+# 计算 t_n = n * log(n)
+results$t_n <- results$n * log(results$n)
+
+# 线性回归
+model <- lm(a_n ~ t_n, data = results)
+
+# 回归模型的摘要
+summary(model)
+
+# 绘制结果
+ggplot(results, aes(x = t_n, y = a_n)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "平均计算时间与 t_n 的关系",
+       x = "t_n = n log(n)",
+       y = "平均计算时间（秒）") +
+  theme_minimal()
+```
+
+**HW3**
+
+_6.6_ Estimate the 0.025, 0.05, 0.95, and 0.975 quantiles of the skewness $\sqrt{b_1}$ under normality by a Monte Carlo experiment. Compute the standard error of the estimates from (2.14) using the normal approximation for the density (with exact variance formula). Compare the estimated quantiles with the quantiles of the large sample approximation $\sqrt{b_1}\approx N(0,6/n).$
+ 
+ **解题思路**：
+ 
+（1）生成10000组服从标准正态分布的数据，并计算出样本偏度以及样本偏度的分位数
+
+（2）使用精确方差公式$Var(\hat{x}_q)=\frac{q(1 −q)}{nf({x}_q)^2}$计算分位数的标准误差
+
+（3）将估计的分位数与近似分布$N(0,6/n)$的分位数进行比较
+ 
+**R代码**：
+```{r}
+# 加载必要的库
+library(moments)
+
+# 设置参数
+n <- 10000  # 每组样本大小
+num_groups <- 10000  # 组数
+
+# 存储偏度值
+skewness_values <- numeric(num_groups)
+
+# 生成 10000 组标准正态分布数据并计算样本偏度
+set.seed(1212)  # 设置随机种子以保证结果可重复
+for (i in 1:num_groups) {
+  sample_data <- rnorm(n)  # 从标准正态分布中生成样本
+  skewness_values[i] <- skewness(sample_data)  # 计算偏度
+}
+
+# 计算样本偏度的分位数
+quantiles <- quantile(skewness_values, probs = c(0.025, 0.05, 0.95, 0.975))
+print("样本偏度的分位数:")
+print(quantiles)
+
+# 计算分位数的标准误差
+# 先计算偏度分布的密度函数值
+density_values <- dnorm(quantiles)  # 计算分位数的密度值
+
+# 计算标准误差
+standard_errors <- sqrt((c(0.025, 0.05, 0.95, 0.975) * (1 - c(0.025, 0.05, 0.95, 0.975))) / (num_groups * density_values^2))
+cat("分位数的标准误差:\n")
+print(standard_errors)
+
+# 计算近似分布 N(0, 6/n) 的分位数
+standard_deviation <- sqrt(6 / n)
+approx_quantiles <- qnorm(c(0.025, 0.05, 0.95, 0.975), mean = 0, sd = standard_deviation)
+print("近似分布 N(0, 6/n) 的分位数:")
+print(approx_quantiles)
+
+# 比较结果
+comparison <- data.frame(
+  Quantiles = c(0.025, 0.05, 0.95, 0.975),
+  Sample_Quantiles = quantiles,
+  Approx_Quantiles = approx_quantiles
+)
+print("分位数比较:")
+print(comparison)
+```
+
+结果如上所示，在大样本情况下，样本偏度估计的分位数与近似分布$N(0,6/n)$的分位数非常接近
+
+_6.B_ Tests for association based on Pearson product moment correlation $ρ$,Spear-man’s rank correlation coefficient $ρ_s$, or Kendall’s coefficient $τ$, are imple-mented in cor.test. Show (empirically) that the nonparametric tests based on $ρ_s$ or $τ$ are less powerful than the correlation test when the sampled dis-tribution is bivariate normal. Find an example of an alternative (a bivariate distribution $(X,Y)$ such that $X$ and $Y$ are dependent) such that at least one of the nonparametric tests have better empirical power than the correlation test against this alternative.
+
+**解题思路**：
+
+（1）设$X\sim Exp(1)$，令$Y=X^{0.4}+t_{10}$，针对$(X,Y)$ 计算Pearson相关系数、Spearman秩相关系数以及Kendall相关系数
+
+（2）对三个相关系数检验的功效进行比较
+
+**R代码**：
+```{r}
+# 设置参数
+set.seed(1212)  # 设置随机种子以保证可重复性
+n <- 100  # 每次模拟的样本大小
+simulations <- 10000  # 总模拟次数
+alpha <- 0.05  # 显著性水平
+
+# 存储功效的计数
+pearson_power <- 0
+spearman_power <- 0
+kendall_power <- 0
+
+# 进行模拟
+for (i in 1:simulations) {
+  # 生成数据
+  X <- rexp(n)  # 生成一个有序的序列
+  Y <- X^0.4 + rt(n, 10) # Y 是 X 的对数加上一定的噪声
+
+  # 对于每种检验，进行假设检验
+  pearson_test <- cor.test(X, Y)
+  spearman_test <- cor.test(X, Y, method = "spearman")
+  kendall_test <- cor.test(X, Y, method = "kendall")
+
+  # 检查功效
+  if (pearson_test$p.value < alpha) {
+    pearson_power <- pearson_power + 1
+  }
+  if (spearman_test$p.value < alpha) {
+    spearman_power <- spearman_power + 1
+  }
+  if (kendall_test$p.value < alpha) {
+    kendall_power <- kendall_power + 1
+  }
+}
+
+# 计算功效
+pearson_effectiveness <- pearson_power / simulations
+spearman_effectiveness <- spearman_power / simulations
+kendall_effectiveness <- kendall_power / simulations
+
+# 输出结果
+cat("皮尔逊检验的功效:", pearson_effectiveness, "\n")
+cat("斯皮尔曼检验的功效:", spearman_effectiveness, "\n")
+cat("肯德尔检验的功效:", kendall_effectiveness, "\n")
+
+```
+从以上结果可以看出，后两种检验方法的功效好于皮尔逊检验。
+
+If we obtain the powers for two methods under a particular simulation setting with 10,000 experiments: say, 0.651 for one method and 0.676 for another method. We want to know if the powers are different at 0.05 level.
+ What is the corresponding hypothesis test problem?
+ What test should we use? Z-test, two-sample t-test, paired-t
+ test or McNemar test? Why?
+ Please provide the least necessary information for hypothesis testing.
+ 
+ **解题思路**：
+ 
+ （1）确定原假设为：$H_0:两种方法的功效相等$
+ 
+ （2）由于我们比较的是两个独立样本，并且在样本量较大的情况下（1000次实验），正态近似是合理的，适合用$z$检验
+
+ **R代码**：
+```{r}
+# 设置参数
+p1 <- 0.651  # 第一种方法的功效
+p2 <- 0.676  # 第二种方法的功效
+n1 <- 10000  # 第一种方法的实验次数
+n2 <- 10000  # 第二种方法的实验次数
+
+# 计算成功次数
+X1 <- p1 * n1
+X2 <- p2 * n2
+
+# 计算合并比例
+p <- (X1 + X2) / (n1 + n2)
+
+# 计算Z统计量
+Z <- (p1 - p2) / sqrt(p * (1 - p) * (1/n1 + 1/n2))
+
+# 计算p值
+p_value <- 2 * (1 - pnorm(abs(Z)))  # 双尾检验
+
+# 输出结果
+cat("Z统计量:", Z, "\n")
+cat("p值:", p_value, "\n")
+
+# 判断是否拒绝零假设
+if (p_value < 0.05) {
+  cat("拒绝零假设：两种方法的功效有显著差异。\n")
+} else {
+  cat("未拒绝零假设：两种方法的功效没有显著差异。\n")
+}
+```
+ 
+从以上的结果可以看出，$p=0.00018<0.05$，故拒绝原假设，在显著性水平为0.05下认为两种方法的功效具有差异。
+
+
+**HW4**
+
+Of N =1000 hypotheses, 950 are null and 50 are alternative. The p-value under any null hypothesis is uniformly distributed (use runif), and the p-value under any alternative hypothesis follows the beta distribution with parameter 0.1 and 1 (use rbeta). Obtain Bonferroni adjusted p-values and B-H adjusted p-values. Calculate FWER, FDR, and TPR under nominal level α =0.1 for each of the two adjustment methods based on
+m=10000 simulation replicates. You should output the 6 numbers (3 ) to a 3×2 table (column names: Bonferroni correction, B-H correction; row names: FWER, FDR, TPR). Comment the results.
+
+**解题思路**：
+
+(1)计算在显著性水平为0.1下 Bonferroni 调整方法和 B-H 调整方法的FWER,FDR和TPR值
+
+(2)输出结果表格
+
+
+**R代码**：
+```{r cars}
+# 设置随机种子以便结果可重现
+set.seed(1212)
+# 设置参数
+N <- 1000  # 总的假设个数
+n_null <- 950  # 真假设的数量
+n_alt <- 50  # 假假设的数量
+alpha <- 0.1  # 显著性水平
+m <- 10000  # 模拟次数
+
+# Bonferroni校正函数
+bonferroni_correction <- function(p_values, alpha) {
+  return(p.adjust(p_values, method = "bonferroni"))
+}
+
+# BH校正函数
+bh_correction <- function(p_values, alpha) {
+  return(p.adjust(p_values, method = "BH"))
+}
+
+# 进行一次假设检验的模拟
+simulate_hypothesis_test <- function() {
+  # 真假设的 p 值（均匀分布）
+  p_null <- runif(n_null)
+  
+  # 假假设的 p 值（Beta 分布）
+  p_alt <- rbeta(n_alt, 0.1, 1)
+  
+  # 合并 p 值
+  p_values <- c(p_null, p_alt)
+  
+  # Bonferroni 校正
+  bonferroni_p <- bonferroni_correction(p_values, alpha)
+  
+  # BH 校正
+  bh_p <- bh_correction(p_values, alpha)
+  
+  return(list(p_values = p_values, bonferroni_p = bonferroni_p, bh_p = bh_p))
+}
+
+# 初始化结果储存变量
+bonferroni_results <- data.frame(FWER = 0, FDR = 0, TPR = 0)
+bh_results <- data.frame(FWER = 0, FDR = 0, TPR = 0)
+
+# 多次模拟实验
+for (i in 1:m) {
+  result <- simulate_hypothesis_test()
+  
+  # Bonferroni校正结果
+  bonferroni_reject <- result$bonferroni_p <= alpha
+  bonferroni_FWER <- any(bonferroni_reject[1:n_null])
+  bonferroni_FDR <- sum(bonferroni_reject[1:n_null]) / max(1, sum(bonferroni_reject))
+  bonferroni_TPR <- sum(bonferroni_reject[(n_null + 1):N]) / n_alt
+  
+  bonferroni_results$FWER <- bonferroni_results$FWER + bonferroni_FWER
+  bonferroni_results$FDR <- bonferroni_results$FDR + bonferroni_FDR
+  bonferroni_results$TPR <- bonferroni_results$TPR + bonferroni_TPR
+  
+  # BH校正结果
+  bh_reject <- result$bh_p <= alpha
+  bh_FWER <- any(bh_reject[1:n_null])
+  bh_FDR <- sum(bh_reject[1:n_null]) / max(1, sum(bh_reject))
+  bh_TPR <- sum(bh_reject[(n_null + 1):N]) / n_alt
+  
+  bh_results$FWER <- bh_results$FWER + bh_FWER
+  bh_results$FDR <- bh_results$FDR + bh_FDR
+  bh_results$TPR <- bh_results$TPR + bh_TPR
+}
+
+# 计算平均值
+bonferroni_results <- bonferroni_results / m
+bh_results <- bh_results / m
+
+# 创建结果表格
+results_table <- data.frame(
+  "Bonferroni correction" = c(bonferroni_results$FWER, bonferroni_results$FDR, bonferroni_results$TPR),
+  "B-H correction" = c(bh_results$FWER, bh_results$FDR, bh_results$TPR)
+)
+rownames(results_table) <- c("FWER", "FDR", "TPR")
+
+# 输出结果表格
+print(results_table)
+```
+
+  从以上结果可以看出 Bonferroni 调整方法得到的 FWER 约等于0.094，接近假定的显著性水平$\alpha=0.1$。但是 B-H 调整方法得到的 FWER 接近0.93，较接近1，这说明 B-H 调整方法对于控制 FWER 并不严格；Bonferroni 调整方法得到的 FDR 非常低，较保守，B-H 调整方法得到的 FDR 接近假定的显著性水平$\alpha=0.1$；Bonferroni 调整方法得到的 TPR 低于 B-H 调整方法，说明B-H 调整方法在检验真阳性方面的能力更高。
+
+**7.4**  Refer to the air-conditioning data set aircondit provided in the boot package. The 12 observations are the times in hours between failures of airconditioning equipment [63, Example 1.1]:
+$$
+3,5,7,18,43,85,91,98,100,130,230,487.
+$$
+Assume that the times between failures follow an exponential model Exp(λ).Obtain the MLE of the hazard rate λ and use bootstrap to estimate the bias and standard error of the estimate.
+
+**解题思路**：
+
+(1)首先计算$\lambda$的最大似然估计。对于指数分布，其概率密度函数为：
+$$
+f(x;\lambda)=\lambda e^{-\lambda x},~~x\geq0
+$$
+对于$n$个样本$x_1,x_2,...,x_n$,其似然函数为：
+$$
+L(\lambda)=\prod\limits_{i=1}\limits^n \lambda e^{-\lambda x_i}
+$$
+取对数似然函数并对$\lambda$求导，令导数为0，可以得到$\lambda$的最大似然估计(MLE)：
+$$
+\hat{\lambda}=\frac{1}{\overline{x}}
+$$
+(2)计算偏差：
+$$
+Bias=\hat{\lambda}_{bootstrap}-\hat{\lambda}_{original}
+$$
+(3)计算标准误差：
+$$
+SE=\sqrt{\frac{1}{m-1}\sum\limits_{i=1}\limits^m(\hat{\lambda}_{i}-\hat{\lambda}_{bootstrap})^2}
+$$
+其中$m$是Bootstrap迭代次数,$\hat{\lambda}_{bootstrap}$是 Bootstrap 样本的均值。
+
+**R代码**：
+```{r}
+# 加载数据和库
+library(boot)
+
+# 设置随机种子以便结果可重现
+set.seed(1212)
+
+# 空调设备故障时间间隔数据
+data <- c(3, 5, 7, 18, 43, 85, 91, 98, 100, 130, 230, 487)
+
+# 计算 MLE（最大似然估计）
+lambda_mle <- 1 / mean(data)
+cat("MLE of lambda:", lambda_mle, "\n")
+
+# 定义 Bootstrap 函数
+bootstrap_function <- function(data, indices) {
+  resample_data <- data[indices]
+  lambda_hat <- 1 / mean(resample_data)
+  return(lambda_hat)
+}
+
+# 设置 Bootstrap 迭代次数
+B <- 1000
+
+# 使用 boot 函数进行 Bootstrap
+boot_results <- boot(data, statistic = bootstrap_function, R = B)
+
+# 计算偏差和标准误差
+bootstrap_mean <- mean(boot_results$t)
+bias <- bootstrap_mean - lambda_mle
+se <- sd(boot_results$t)
+
+# 输出结果
+cat("Bootstrap Bias:", bias, "\n")
+cat("Bootstrap Standard Error:", se, "\n")
+
+# 查看 Bootstrap 结果
+boot.ci(boot_results, type = "basic")
+```
+  
+  从以上结果可以看出$\lambda$的最大似然估计值为0.00925212，自举法的估计值的偏差为0.001331418，标准差为0.004203464
+
+
+
+**7.5**  Refer to Exercise 7.4. Compute 95% bootstrap confidence intervals for the mean time between failures 1/λ by the standard normal, basic, percentile, and BCa methods. Compare the intervals and explain why they may differ.
+
+**解题思路**：
+
+(1)分别用standard normal, basic, percentile, and BCa计算$1/\lambda$的95% bootstrap 置信区间
+
+(2)作比较
+
+
+**R代码**：
+```{r}
+# 加载必要库
+library(boot)
+
+# 空调设备故障时间间隔数据
+data <- c(3, 5, 7, 18, 43, 85, 91, 98, 100, 130, 230, 487)
+
+# MLE of lambda (风险率)
+lambda_mle <- 1 / mean(data)
+mean_failure_time <- 1 / lambda_mle
+
+# 定义 Bootstrap 函数，用于估计1/λ（故障时间的均值）
+bootstrap_function <- function(data, indices) {
+  resample_data <- data[indices]
+  lambda_hat <- 1 / mean(resample_data)
+  return(1 / lambda_hat)  # 返回故障时间的均值
+}
+
+# 设置 Bootstrap 迭代次数
+B <- 1000
+
+# 使用 boot 函数进行 Bootstrap
+boot_results <- boot(data, statistic = bootstrap_function, R = B)
+
+# 计算标准正态法置信区间
+z_star <- qnorm(0.975)
+se <- sd(boot_results$t)
+ci_standard_normal <- c(mean_failure_time - z_star * se, mean_failure_time + z_star * se)
+
+# 计算基础法置信区间
+ci_basic <- boot.ci(boot_results, type = "basic")
+
+# 计算百分位法置信区间
+ci_percentile <- boot.ci(boot_results, type = "perc")
+
+# 计算 BCa 法置信区间
+ci_bca <- boot.ci(boot_results, type = "bca")
+
+# 输出所有置信区间
+cat("Standard Normal CI: ", ci_standard_normal, "\n")
+cat("Basic CI: ", ci_basic$basic[4:5], "\n")
+cat("Percentile CI: ", ci_percentile$percent[4:5], "\n")
+cat("BCa CI: ", ci_bca$bca[4:5], "\n")
+```
+
+  从以上结果可以看出：Standard Normal 方法得到的置信区间为[34.62818,181.5385]，Basic 方法得到的置信区间为[28.02752,167.9979]，Percentile 方法得到的置信区间为[48.16878,188.1391], BCa 方法得到的置信区间为[58.5,218.7827]。这些方法得到的置信区间不同的可能原因：Standard Normal 方法通常假设估计值是正态分布，因此当数据较少时可能会产生误差，且不一定能反映出偏态分布。Basic 方法和Percentile 方法都基于 Bootstrap 分布，前者对估计量进行校正，后者则直接使用经验分布。BCa 方法纠正了估计的偏差，并在估计量分布偏态时仍能提供有效的置信区间。BCa 方法和Percentile 方法适合在样本量较小且数据不对称时的情形，Standard Normal 方法和Basic 方法更适合在数据接近正态分布或对称分布时的情形。
+
+
+**HW5**
+
+**7.8** Refer to Exercise 7.7. Obtain the jackknife estimates of bias and standard error of $\hat{\theta}$.
+
+**解题思路**
+
+（1）首先计算$\theta$的估计值$\hat{\theta}$
+
+（2）计算刀切估计的偏差
+
+（3）计算刀切估计的标准差
+
+
+
+**R代码**
+```{r}
+rm(list = ls())    # 删除所有对象
+# 加载必要的库
+library(bootstrap)
+data1<-data(scor)
+
+# 计算样本协方差矩阵
+sample_cov <- cov(scor)
+
+# 计算协方差矩阵的特征值
+eigenvalues <- eigen(sample_cov)$values
+
+# 计算 theta 的估计值
+theta_hat <- eigenvalues[1] / sum(eigenvalues)
+
+# Jackknife方法计算偏差和标准误差
+n <- nrow(scor)  # 样本量
+theta_jackknife <- numeric(n)
+
+# 对每个样本点，计算去掉该点后的 theta
+for (i in 1:n) {
+  # 去掉第 i 个学生的数据
+  scor_jack <- scor[-i, ]
+  # 计算新的协方差矩阵
+  cov_jack <- cov(scor_jack)
+  # 计算新的特征值
+  eigenvalues_jack <- eigen(cov_jack)$values
+  # 计算新的 theta
+  theta_jackknife[i] <- eigenvalues_jack[1] / sum(eigenvalues_jack)
+}
+
+# 计算 Jackknife 偏差
+theta_mean_jack <- mean(theta_jackknife)
+jackknife_bias <- (n - 1) * (theta_mean_jack - theta_hat)
+
+# 计算 Jackknife 标准误差
+jackknife_se <- sqrt((n - 1) * mean((theta_jackknife - theta_mean_jack)^2))
+
+# 输出结果
+cat("Theta estimate (theta_hat):", theta_hat, "\n")
+cat("Jackknife Bias estimate:", jackknife_bias, "\n")
+cat("Jackknife Standard Error estimate:", jackknife_se, "\n")
+
+```
+  从输出结果可以看出，刀切估计量的偏差为0.001069139，标准差为0.04955231。
+  
+  **7.10** In Example 7.18, leave-one-out (n-fold) cross validation was used to select the best fitting model. Repeat the analysis replacing the Log-Log model with a cubic polynomial model. Which of the four models is selected by the cross validation procedure? Which model is selected according to maximum adjusted $R^2$?
+
+**解题思路**
+
+（1）将对数-对数模型替换为三次多项式模型
+
+（2）用$k$折交叉检验比较这四个模型
+
+（3）比较四个模型的调整$R^2$
+
+
+
+**R代码**
+```{r}
+library(DAAG)
+attach(ironslag)
+n <- length(magnetic) #in DAAG ironslag
+e1 <- e2 <- e3 <- e4 <- numeric(n)
+# for n-fold cross validation
+# fit models on leave-one-out samples
+for (k in 1:n) {
+y <- magnetic[-k]
+x <- chemical[-k]
+
+J1 <- lm(y ~ x)
+yhat1 <- J1$coef[1] + J1$coef[2] * chemical[k]
+e1[k] <- magnetic[k]- yhat1
+
+J2 <- lm(y ~ x + I(x^2))
+yhat2 <- J2$coef[1] + J2$coef[2] * chemical[k] +
+J2$coef[3] * chemical[k]^2
+e2[k] <- magnetic[k]- yhat2
+
+J3 <- lm(log(y) ~ x)
+logyhat3 <- J3$coef[1] + J3$coef[2] * chemical[k]
+yhat3 <- exp(logyhat3)
+e3[k] <- magnetic[k]- yhat3
+
+J4 <- lm(y ~ x + I(x^2) + I(x^3))
+yhat4 <- J4$coef[1] + J4$coef[2] * chemical[k] +
+J4$coef[3] * chemical[k]^2+J4$coef[4] * chemical[k]^3
+e4[k] <- magnetic[k]- yhat4
+}
+c(mean(e1^2), mean(e2^2), mean(e3^2), mean(e4^2))
+y <- magnetic
+x <- chemical
+J1 <- lm(y ~ x)
+J2 <- lm(y ~ x + I(x^2))
+J3 <- lm(log(y) ~ x)
+J4 <- lm(y ~ x + I(x^2) + I(x^3))
+summary(J1)$adj.r.squared
+summary(J2)$adj.r.squared
+summary(J3)$adj.r.squared
+summary(J4)$adj.r.squared
+```
+  从以上结果可以看出，线性模型、二次多项式模型、指数模型、三次多项式模型的均方误差分别为：19.55644、17.85248、18.44188、18.17756。均方误差最小的模型仍然为二次多项式模型。但从调整后的$R^2$来看（这四个模型的调整$R^2$分别为0.5281545、0.5768151、0.5280556、0.5740396），最好的模型仍为二次多项式模型。
+  
+
+**8.1** Implement the two-sample Cram$\acute{e}$r-von Mises test for equal distributions as a permutation test. Apply the test to the data in Examples 8.1 and 8.2.
+
+**解题思路**
+
+（1）构建Cramér-von Mises统计量
+
+（2）进行置换检验
+
+（3）分析检验结果的P值
+
+
+
+**R代码**
+```{r}
+rm(list = ls())    # 删除所有对象
+
+# 加载数据
+data(chickwts)
+
+# 提取soybean和linseed组的重量数据
+sample.x <- sort(as.vector(chickwts$weight[chickwts$feed == "soybean"]))
+sample.y <- sort(as.vector(chickwts$weight[chickwts$feed == "linseed"]))
+
+# 定义Cramér-von Mises统计量计算函数
+cvm_statistic <- function(x, y) {
+  n <- length(x)
+  m <- length(y)
+  # combined <- c(x, y)
+  ecdf_x <- ecdf(x)
+  ecdf_y <- ecdf(y)
+  
+  # 计算Cramér-von Mises统计量
+  cvm <- (m*n)/(m+n)^2 * (sum((ecdf_x(x) - ecdf_y(x))^2)+sum((ecdf_x(y) - ecdf_y(y))^2))
+  return(cvm)
+}
+
+# 计算原始样本的Cramér-von Mises统计量
+original_cvm <- cvm_statistic(sample.x, sample.y)
+
+# 定义置换检验次数
+n_permutations <- 10000
+perm_cvm <- numeric(n_permutations)
+
+# 进行置换检验
+set.seed(1213)
+for (i in 1:n_permutations) {
+  combined <- sample(c(sample.x, sample.y))
+  x_perm <- combined[1:length(sample.x)]
+  y_perm <- combined[(length(sample.x) + 1):length(combined)]
+  
+  perm_cvm[i] <- cvm_statistic(x_perm, y_perm)
+}
+
+# 计算p值
+p_value <- mean(abs(perm_cvm) >= abs(original_cvm))
+
+# 输出结果
+cat("原始样本的Cramér-von Mises统计量:", original_cvm, "\n")
+cat("置换检验的p值:", p_value, "\n")
+
+
+```
+  从输出结果可以看出，置换检验的P值为0.4138大于0.05，接受原假设，故在显著性水平为0.05下认为soybean 和 linseed groups的分布相同。
+  
+
+**8.2**  Implement the bivariate Spearman rank correlation test for independence [255] as a permutation test. The Spearman rank correlation test statistic can  be obtained from function cor with method = "spearman". Compare the achieved significance level of the permutation test with the p-value reported by cor.test on the same samples.
+
+
+**解题思路**
+
+（1）计算斯皮尔曼秩相关检验的p 值
+
+（2）进行置换检验
+
+（3）分析检验结果的P值并进行对比
+
+
+**R代码**
+```{r}
+# 加载数据
+data(chickwts)
+
+# 使用R介绍cor.test函数的样例数据
+x <- c(44.4, 45.9, 41.9, 53.3, 44.7, 44.1, 50.7, 45.2, 60.1)
+y <- c( 2.6,  3.1,  2.5,  5.0,  3.6,  4.0,  5.2,  2.8,  3.8)
+
+
+# 使用 cor.test 函数计算 Spearman 相关系数的 p 值
+spearman_result <- cor.test(x, y, method = "spearman")
+#cat("Spearman 相关系数:", spearman_result$estimate, "\n")
+cat("cor.test 给出的 p 值:", spearman_result$p.value, "\n")
+
+# 定义 Spearman 相关系数计算函数
+spearman_stat <- function(x, y) {
+  cor(x, y, method = "spearman")
+}
+
+# 计算原始样本的 Spearman 相关系数
+original_spearman <- spearman_stat(x, y)
+
+# 定义置换检验的次数
+n_permutations <- 10000
+perm_spearman <- numeric(n_permutations)
+
+# 进行置换检验
+set.seed(1212)
+for (i in 1:n_permutations) {
+  y_perm <- sample(y)  # 随机打乱 y 的顺序
+  perm_spearman[i] <- spearman_stat(x, y_perm)
+}
+
+# 计算置换检验的 p 值
+p_value_permutation <- mean(abs(perm_spearman) >= abs(original_spearman))
+
+# 输出结果
+#cat("原始样本的 Spearman 相关系数:", original_spearman, "\n")
+cat("置换检验的 p 值:", p_value_permutation, "\n")
+
+```
+  从以上结果可以得到斯皮尔曼秩相关检验的 p 值为0.0968，与置换检验的 P ,0.0956较为接近。
+
+
+**HW6**
+
+**9.3** Use the Metropolis-Hastings sampler to generate random variables from a standard Cauchy distribution. Discard the first 1000 of the chain, and compare the deciles of the generated observations with the deciles of the standard Cauchy distribution (see qcauchyor qt with df=1). Recall that a Cauchy($θ,η$) distribution has density function
+$$
+f(x)=\frac{1}{\theta \pi(1+[(x-\eta)/\theta]^2)},  -\infty<x<\infty, \theta>0.
+$$
+The standard Cauchy has the Cauchy($θ =1,η= 0$) density. (Note that the standard Cauchy density is equal to the Student t density with one degree of freedom.)
+
+**解题思路**
+
+(1)使用Metropolis-Hastings采样器从柯西分布中生成随机变量
+
+(2)丢弃链中的前1000个随机变量
+
+(3)比较生成的观测值与标准柯西分布的十分位数
+
+**R代码**
+```{r}
+set.seed(1213)  # 固定随机种子
+
+# Metropolis-Hastings采样器
+metropolis_cauchy <- function(n, burn_in = 1000) {
+  # 初始值
+  x <- numeric(n + burn_in)
+  x[1] <- 0
+  
+  for (i in 2:(n + burn_in)) {
+    # 从提议分布N(x[i-1], 1)采样候选点
+    proposal <- rnorm(1, mean = x[i - 1], sd = 1)
+    
+    # 计算接受概率
+    alpha <- dcauchy(proposal) / dcauchy(x[i - 1])
+    if (runif(1) < alpha) {
+      x[i] <- proposal
+    } else {
+      x[i] <- x[i - 1]
+    }
+  }
+  
+  # 丢弃前burn_in个样本
+  return(x[(burn_in + 1):(n + burn_in)])
+}
+
+# 参数设置
+n <- 10000  # 所需样本数量
+samples <- metropolis_cauchy(n)
+
+# 计算生成样本的分位数
+sample_deciles <- quantile(samples, probs = seq(0.1, 1, by = 0.1))
+
+# 计算标准柯西分布的理论分位数
+theoretical_deciles <- qcauchy(seq(0.1, 1, by = 0.1))
+
+# 比较生成样本分位数与理论分位数
+result <- data.frame(
+  Decile = seq(0.1, 1, by = 0.1),
+  Simulated = sample_deciles,
+  Theoretical = theoretical_deciles
+)
+
+print(result)
+```
+
+从输出结果可以看出，生成的观测值的十分位数与标准柯西分布的十分位数较为接近。
+
+**9.8** This example appears in [40]. Consider the bivariate density
+$$
+f(x,y)\propto \binom{n}{x}y^{x+a-1}(1-y)^{n-x+b-1},~~x=0,1,...,n,~0\leq y\leq 1.
+$$
+It can be shown (see e.g. [23]) that for fixed $a,b,n$, the conditional distributions are Binomial($n,y$) and Beta($x+a,n−x+b$). Use the Gibbs sampler to generate a chain with target joint density $f(x,y)$.
+
+
+**R代码**
+```{r}
+set.seed(1212)  # 固定随机种子
+
+# Gibbs采样器函数
+gibbs_sampler <- function(a, b, n, num_samples) {
+  # 初始化链
+  x_chain <- numeric(num_samples)
+  y_chain <- numeric(num_samples)
+  
+  # 初始值
+  x_chain[1] <- 0
+  y_chain[1] <- 0.5
+  
+  for (i in 2:num_samples) {
+    # 给定当前y，采样x | y ~ Binomial(n, y)
+    y <- y_chain[i - 1]
+    x_chain[i] <- rbinom(1, n, y)
+    
+    # 给定当前x，采样y | x ~ Beta(x + a, n - x + b)
+    x <- x_chain[i]
+    y_chain[i] <- rbeta(1, x + a, n - x + b)
+  }
+  
+  # 返回生成的链
+  return(data.frame(x = x_chain, y = y_chain))
+}
+
+# 参数设置
+a <- 4
+b <- 2
+n <- 10
+num_samples <- 10000
+
+# 运行Gibbs采样器
+samples <- gibbs_sampler(a, b, n, num_samples)
+
+# 丢弃前1000个样本
+burn_in <- 1000
+samples <- samples[-(1:burn_in), ]
+
+# 显示前几组生成的样本
+head(samples)
+plot(samples$x,type='l')
+plot(samples$y,type='l')
+hist(samples$x)
+hist(samples$y)
+```
+
+For each of the above exercise, use the Gelman-Rubin method to monitor convergence of the chain, and run the chain until it converges approximately to the target distribution according to $\hat{R} <1.2$.
+
+**解题思路**
+
+(1)使用Gelman-Rubin方法监控链的收敛性
+
+(2)当$\hat{R} <1.2$时，说明链已收敛到目标分布
+
+
+9.3
+**R代码**
+```{r}
+library(coda)
+set.seed(1212)  # 固定随机种子
+# Metropolis-Hastings 采样器函数
+metropolis_cauchy <- function(n, burn_in = 1000, init = 0) {
+  x <- numeric(n + burn_in)
+  x[1] <- init
+  
+  for (i in 2:(n + burn_in)) {
+    proposal <- rnorm(1, mean = x[i - 1], sd = 1)
+    alpha <- dcauchy(proposal) / dcauchy(x[i - 1])
+    if (runif(1) < alpha) {
+      x[i] <- proposal
+    } else {
+      x[i] <- x[i - 1]
+    }
+  }
+  return(x[(burn_in + 1):(n + burn_in)])
+}
+
+# 多条链的 Metropolis-Hastings 采样
+num_chains <- 4
+chain_length <- 10000
+chains <- lapply(1:num_chains, function(i) metropolis_cauchy(chain_length, init = runif(1, -10, 10)))
+
+# 将结果转换为 mcmc 列表
+mh_mcmc <- mcmc.list(lapply(chains, mcmc))
+
+# 计算 Gelman-Rubin 诊断
+print(gelman.diag(mh_mcmc)$psrf[, "Point est."])
+```
+从输出结果可以看出，$\hat{R} =1.13<1.2$，说明链已收敛到目标分布。
+
+9.8
+**R代码**
+```{r}
+set.seed(1212)  # 固定随机种子
+# Gibbs 采样器函数
+gibbs_sampler <- function(a, b, n, num_samples, init_x = 0, init_y = 0.5) {
+  x_chain <- numeric(num_samples)
+  y_chain <- numeric(num_samples)
+  x_chain[1] <- init_x
+  y_chain[1] <- init_y
+  
+  for (i in 2:num_samples) {
+    y <- y_chain[i - 1]
+    x_chain[i] <- rbinom(1, n, y)
+    
+    x <- x_chain[i]
+    y_chain[i] <- rbeta(1, x + a, n - x + b)
+  }
+  
+  return(data.frame(x = x_chain, y = y_chain))
+}
+
+# 设置参数和链数量
+a <- 2
+b <- 2
+n <- 10
+num_samples <- 10000
+num_chains <- 4
+
+# 运行多条 Gibbs 采样链
+gibbs_chains <- lapply(1:num_chains, function(i) gibbs_sampler(a, b, n, num_samples, init_x = sample(0:n, 1), init_y = runif(1)))
+
+# 提取 x 和 y 链，计算 Gelman-Rubin 诊断
+x_chains <- mcmc.list(lapply(gibbs_chains, function(chain) mcmc(chain$x)))
+y_chains <- mcmc.list(lapply(gibbs_chains, function(chain) mcmc(chain$y)))
+
+# 计算 x 和 y 的 Gelman-Rubin 诊断
+gelman_diag_x <- gelman.diag(x_chains)
+gelman_diag_y <- gelman.diag(y_chains)
+
+print(gelman_diag_x$psrf[, "Point est."])
+print(gelman_diag_y$psrf[, "Point est."])
+```
+从输出结果可以看出，$\hat{R_x} =1<1.2,\hat{R_y} =1<1.2$，说明链已收敛到目标分布。
+
+
+Proof the Stationarity of Metropolis-Hastings sampler Algorithm in continuous situation.
+
+若 $s=r$，$K(s,r)f(s) = K(r,s)f(r)$显然成立；
+若 $s\ne r$，根据条件有$K(r,s)=\alpha(r,s)g(s|r),\alpha(s,r)=\min\{\frac{f((r)g(s|r)}{f(s)g(r|s)},1\}$，则
+$$
+K(r,s)f(r)=\alpha(r,s)g(s|r)f(r)=\begin{cases} f(s)g(r|s) & f(s)g(r|s)\le f(r)g(s|r)\\ f(r)g(s|r) & f(s)g(r|s)> f(r)g(s|r) \end{cases}
+$$
+同理可得
+
+$$
+K(s,r)f(s)=\begin{cases} f(r)g(s|r) & f(r)g(s|r)<f(s)g(r|s)\\ f(s)g(r|s) & f(r)g(s|r)\ge f(s)g(r|s) \end{cases}
+$$
+
+此时，显然有 $K(s,r)f(s) = K(r,s)f(r)$。
+
+
+**HW7**
+
+**11.3**  (a) Write a function to compute the $k^{th}$ term in
+$$
+\sum\limits_{k=0}^{\infty}\frac{(-1)^k}{k!2^k}\frac{||a||^{2k+2}}{(2k+1)(2k+2)}\frac{\Gamma(\frac{d+1}{2})\Gamma(k+\frac{3}{2})}{\Gamma(k+\frac{d}{2}+1)},
+$$
+where $d ≥ 1$ is an integer, $a$ is a vector in $\mathbb{R}^d$,and $||·||$ denotes the Euclidean norm. Perform the arithmetic so that the coefficients can be computed for (almost) arbitrarily large $k$ and $d$. (This sum converges for all $a \in \mathbb{R}^d$).
+(b) Modify the function so that it computes and returns the sum.
+(c) Evaluate the sum when $a =(1,2)^T$.
+
+
+
+**R代码**
+```{r}
+# 定义函数计算向量的欧几里得范数
+euclidean_norm <- function(a) {
+  sqrt(sum(a^2))
+}
+
+# 定义第 k 项的计算函数
+k_term <- function(k, a, d) {
+  norm_a <- euclidean_norm(a)
+  coef1 <- (-1)^k / (factorial(k) * 2^k)
+  coef2 <- norm_a^(2 * k + 2) / ((2 * k + 1) * (2 * k + 2))
+  gamma_part <- gamma((d + 1) / 2) * gamma(k + 3 / 2) / gamma(k + d / 2 + 1)
+  term_k <- coef1 * coef2 * gamma_part
+  return(term_k)
+}
+
+# 定义计算级数和的函数
+series_sum <- function(a, d, tol = 1e-10, max_iter = 1000) {
+  sum <- 0
+  k <- 0
+  repeat {
+    term <- k_term(k, a, d)
+    sum <- sum + term
+    if (abs(term) < tol) { # 收敛判断
+      break
+    }
+    k <- k + 1
+  }
+  return(sum)
+}
+
+# 计算当 a = (1, 2)^T, d = 2 时的级数和
+a <- c(1, 2)
+d <- 2
+result <- series_sum(a, d)
+cat("当 a = (1, 2)^T, d = 2 时的级数和为:", result, "\n")
+```
+
+
+**11.5** Write a function to solve the equation
+$$
+\frac{2\Gamma(\frac{k}{2})}{\sqrt{\pi(k-1)}\Gamma(\frac{k-1}{2})}\int_0^{c_{k-1}}\big(1+\frac{u^2}{k-1}\big)^{-k/2}du\\=\frac{2\Gamma(\frac{k+1}{2})}{\sqrt{\pi k}\Gamma(\frac{k}{2})}\int_0^{c_{k}}\big(1+\frac{u^2}{k}\big)^{-(k+1)/2}du
+$$
+for $a$, where
+$$
+c_k=\sqrt{\frac{a^2k}{k+1-a^2}}.
+$$
+Compare the solutions with the points $A(k)$ in Exercise 11.4.
+
+
+**R代码**
+```{r}
+# 加载必要的库
+library(stats)
+
+# 定义常量 k 值
+k_values <- c(4:25, 100, 500, 1000)
+
+# 定义 c_k 的计算函数
+c_k <- function(a, k) {
+  sqrt((a^2 * k) / (k + 1 - a^2))
+}
+
+# 计算 S_{k-1}(a) 和 S_k(a) 的函数
+S_k <- function(a, k) {
+  critical_value <- c_k(a,k)
+  pt(-critical_value, df = k, lower.tail = FALSE)
+}
+
+# 定义找到 A(k) 的函数
+find_A_k <- function(k) {
+  target_func <- function(a) S_k(a, k-1) - S_k(a, k)
+  result <- uniroot(target_func, lower = 0.001, upper = 2)$root
+  return(result)
+}
+
+# 计算 A(k) 值
+A_k_values <- sapply(k_values, find_A_k)
+
+# 定义积分部分用于解方程的函数
+left_integral <- function(c_k1, k) {
+  integrate(function(u) (1 + u^2 / (k - 1))^(-k / 2), 0, c_k1)$value
+}
+
+right_integral <- function(c_k2, k) {
+  integrate(function(u) (1 + u^2 / k)^(-(k + 1) / 2), 0, c_k2)$value
+}
+
+# 定义方程求解函数，找到满足方程的a值
+solve_for_a <- function(k) {
+  target_func <- function(a) {
+    # 计算 c_{k-1} 和 c_k
+    c_k1 <- c_k(a, k - 1)
+    c_k2 <- c_k(a, k)
+    
+    # 计算方程的左侧和右侧
+    
+    left_side <- exp(lgamma(k / 2)-lgamma((k - 1) / 2))*(2 ) / (sqrt(pi * (k - 1))) * left_integral(c_k1, k)
+    right_side <- exp(lgamma((k + 1) / 2)-lgamma((k) / 2))*(2) / (sqrt(pi * k)) * right_integral(c_k2, k)
+    
+    # 返回左右差值
+    left_side - right_side
+  }
+  
+  # 使用 uniroot 求解方程，找到 a 的值
+  result <- uniroot(target_func,c(0.0001,2))$root
+  return(result)
+}
+
+# 计算解方程得到的 a 值
+a_values <- sapply(k_values, solve_for_a)
+
+# 打印和比较 A(k) 与求解方程得到的 a 值
+comparison <- data.frame(k = k_values, A_k = A_k_values, a_solved = a_values)
+print(comparison)
+```
+
+从输出结果可以看出方程的解与$A(k)$非常接近。
+
+
+Suppose $T_1,...,T_n$ are i.i.d. samples drawn from the exponential distribution with expectation $λ$. Those values greater than $τ$ are not observed due to right censorship, so that the observed values are $Y_i = T_iI(T_i ≤ τ) + τI(T_i > τ), i = 1,...,n.$ Suppose $τ = 1$ and the observed $Y_i$ values are as follows:
+$$
+0.54, 0.48,0.33,0.43,1.00,1.00,0.91,1.00,0.21,0.85
+$$
+Use the E-M algorithm to estimate $λ$, compare your result with the observed data MLE (note: $Y_i$ follows a mixture distribution).
+
+
+
+**R代码**
+```{r}
+# 初始化观测数据和参数
+Y <- c(0.54, 0.48, 0.33, 0.43, 1.00, 1.00, 0.91, 1.00, 0.21, 0.85)
+tau <- 1
+n <- length(Y)
+
+# 初始lambda的估计值（可以随机或使用观测值的均值）
+lambda_est <- mean(Y)
+
+# 设置迭代参数
+tolerance <- 1e-6
+max_iter <- 1000
+iter <- 0
+lambda_old <- 0
+need.lambda <- c()
+
+# EM算法迭代
+while (abs(lambda_est - lambda_old) > tolerance && iter < max_iter) {
+  iter <- iter + 1
+  lambda_old <- lambda_est
+  
+  # E步：计算填补后的 T_i 的期望值
+  T_filled <- sapply(Y, function(y) {
+    if (y < tau) {
+      return(y) # 未截尾的值直接取观测值
+    } else {
+      return(tau + lambda_est) # 截尾的情况
+    }
+  })
+  
+  # M步：更新lambda的估计值
+  lambda_est <- mean(T_filled)
+  need.lambda <- c(need.lambda,lambda_est)
+}
+
+cat("EM算法估计的lambda:", lambda_est, "\n")
+
+# 观测数据的 MLE 估计（仅用未截尾的数据）
+lambda_mle <- sum(Y)/7
+cat("观测数据 MLE 估计的lambda:", lambda_mle, "\n")
+```
+ 
+ 从以上结果得到$\lambda$的 EM 算法估计值与 MLE 估计非常接近。
+
+
+**HW8**
+
+**1** Use the simplex algorithm to solve the following problem. Minimize $4x +2y +9z$ subject to
+$$
+2x+y+z≤2\\
+x−y+3z ≤3\\
+x ≥0,y≥0,z≥0.
+$$
+
+**R代码**
+```{r}
+# 加载线性规划包
+library(lpSolve)
+
+# 定义目标函数系数
+obj <- c(4, 2, 9)
+
+# 定义约束条件矩阵
+const_mat <- matrix(c(
+  2, 1, 1,   # 2x + y + z <= 2
+  1, -1, 3   # x - y + 3z <= 3
+), nrow = 2, byrow = TRUE)
+
+# 定义约束条件的右侧值
+const_rhs <- c(2, 3)
+
+# 定义约束方向
+const_dir <- c("<=", "<=")
+
+# 求解线性规划
+result <- lp("min", obj, const_mat, const_dir, const_rhs, all.int = FALSE)
+
+# 输出结果
+list(
+  Optimal_Value = result$objval,
+  Solution = result$solution
+)
+```
+从输出结果可以看出，当$x=y=z=0$时，$4x +2y +9z$达到最小值0。
+
+**2**  Use both for loops and lapply() to fit linear models to the mtcars using the formulas stored in this list:
+ 
+formulas <- list(
+ mpg ~ disp,
+ mpg ~ I(1 / disp),
+ mpg ~ disp + wt,
+ mpg ~ I(1 / disp) + wt
+ )
+ 
+
+**R代码**
+```{r}
+# 定义公式列表
+formulas <- list(
+  mpg ~ disp,
+  mpg ~ I(1 / disp),
+  mpg ~ disp + wt,
+  mpg ~ I(1 / disp) + wt
+)
+
+# 加载数据集
+data(mtcars)
+# 初始化存储模型结果的列表
+models_for <- list()
+
+# 使用 for 循环拟合线性模型
+for (i in seq_along(formulas)) {
+  models_for[[i]] <- lm(formulas[[i]], data = mtcars)
+}
+
+# 使用 lapply 拟合线性模型
+models_lapply <- lapply(formulas, function(f) lm(f, data = mtcars))
+
+
+# 使用 for 循环查看系数
+for (i in seq_along(models_for)) {
+  cat("Model", i, "coefficients:\n")
+  print(coef(models_for[[i]]))
+  cat("\n")
+}
+
+# 使用 lapply 查看系数
+lapply(models_lapply, coef)
+```
+从以上结果可以看出 for 循环和 lapply()方法 得到的拟合模型结果完全一致。
+
+**3** Fit the model mpg ~ disp to each of the bootstrap replicates of mtcars in the list below by using a for loop and lapply(). Can you do it without an anonymous function?
+
+bootstraps <- lapply(1:10, function(i) {
+ rows <- sample(1:nrow(mtcars), rep = TRUE)
+ mtcars[rows, ]
+ })
+ 
+
+**R代码**
+```{r}
+# 创建引导样本列表
+set.seed(123)  # 设置随机种子以便结果可重复
+bootstraps <- lapply(1:10, function(i) {
+  rows <- sample(1:nrow(mtcars), replace = TRUE)
+  mtcars[rows, ]
+})
+# 初始化存储模型的列表
+models_for <- list()
+
+# 使用 for 循环对每个引导样本拟合模型
+for (i in seq_along(bootstraps)) {
+  models_for[[i]] <- lm(mpg ~ disp, data = bootstraps[[i]])
+}
+
+# 定义一个专用的拟合函数
+fit_model <- lm  # 因为公式固定为 mpg ~ disp，因此可以直接传递公式
+
+# 使用 lapply 对引导样本拟合模型
+models_lapply <- lapply(bootstraps, fit_model, formula = mpg ~ disp)
+
+# 使用 for 循环查看系数
+for (i in seq_along(models_for)) {
+  cat("Model", i, "coefficients:\n")
+  print(coef(models_for[[i]]))
+  cat("\n")
+}
+
+# 使用 lapply 查看系数
+lapply(models_lapply, coef)
+
+```
+
+从以上结果可以看出，在不使用匿名函数的条件下依然可以完成任务(for 循环和 lapply()方法得到的模型结果完全一致)。
+
+**4** For each model in the previous two exercises, extract $R^2$ using the function below.
+
+rsq <- function(mod) summary(mod)$r.squared
+
+
+**R代码**
+```{r}
+# 定义 rsq 函数，用于提取模型的 R^2
+rsq <- function(mod) {
+  summary(mod)$r.squared
+}
+
+# 提取 for 循环中每个模型的 R^2
+r_squared_for <- numeric(length(models_for))  # 初始化存储 R^2 的向量
+for (i in seq_along(models_for)) {
+  r_squared_for[i] <- rsq(models_for[[i]])
+}
+
+# 查看结果
+r_squared_for
+
+# 使用 lapply 提取每个模型的 R^2
+r_squared_lapply <- lapply(models_lapply, rsq)  
+
+# 查看结果
+r_squared_lapply
+
+# 比较两种方法的结果是否一致
+#all.equal(r_squared_for, r_squared_lapply)
+
+```
+从以上结果可以看出，for 循环和 lapply()方法得到的$R^2$完全一致。
+
+**5** The following code simulates the performance of a t-test for non-normal data. Use sapply() and an anonymous function to extract the p-value from every trial.
+
+trials <- replicate(
+ 100,
+ t.test(rpois(10, 10), rpois(7, 10)),
+ simplify = FALSE
+ )
+ 
+Extra challenge: get rid of the anonymous function by using [[ directly.
+
+
+**R代码**
+```{r}
+trials <- replicate(
+ 100,
+ t.test(rpois(10, 10), rpois(7, 10)),
+ simplify = FALSE
+ )
+# 使用 sapply 和匿名函数提取 p-value
+p_values_anonymous <- sapply(trials, function(trial) trial$p.value)
+
+# 查看前几个 p-value
+head(p_values_anonymous)
+
+# 使用 [[ 直接提取 p-value
+p_values_direct <- sapply(trials, `[[`, "p.value")
+
+# 查看前几个 p-value
+head(p_values_direct)
+
+# 验证结果是否一致
+all.equal(p_values_anonymous, p_values_direct)
+```
+从以上结果可以得到，使用匿名函数前后，应用 sapply() 方法提取的 $p$ 值一致。
+
+**6**  Implement a combination of Map() and vapply() to create an lapply() variant that iterates in parallel over all of its inputs and stores its outputs in a vector (or a matrix). What arguments should the function take?
+
+
+
+
+**R代码**
+```{r}
+my_lapply_variant <- function(FUN, ..., FUN.VALUE, USE.NAMES = TRUE) {
+  # 参数说明：
+  # FUN: 应用于每组输入的函数
+  # ...: 多个并行输入
+  # FUN.VALUE: 输出的预期类型或结构，用于 vapply 验证
+  # USE.NAMES: 是否保留输出的名称
+  
+  # 使用 Map 在并行输入上迭代
+  mapped_results <- Map(FUN, ...)
+  
+  # 使用 vapply 对每个结果进行验证并返回向量/矩阵
+  result <- vapply(mapped_results, identity, FUN.VALUE, USE.NAMES = USE.NAMES)
+  
+  return(result)
+}
+
+# 定义并行输入，需要对它们的每组元素求和
+x <- 1:5
+y <- 6:10
+
+# 应用函数：对 x 和 y 中的每组值求和
+result <- my_lapply_variant(
+  FUN = function(a, b) a + b,  # 自定义函数：求和
+  x, y,                       # 并行输入
+  FUN.VALUE = numeric(1),     # 输出为标量
+  USE.NAMES = TRUE           # 不保留名称
+)
+
+print(result)  # 输出结果
+
+```
+构建的函数需要“自定义函数”、“并行输入”、“输出的预期类型”、“是否保留输出的名称”共四个参数。
+
+
+**7**  Make a faster version of chisq.test() that only computes the chi-square test statistic when the input is two numeric vectors with no missing values. You can try simplifying chisq.test() or by coding from the mathematical definition (http://en. wikipedia.org/wiki/Pearson%27s_chi-squared_test).
+
+
+**R代码**
+```{r}
+fast_chisq_test <- function(observed, expected) {
+  # 参数说明：
+  # observed: 观察值的数值向量
+  # expected: 期望值的数值向量
+  
+  # 检查输入向量是否长度一致
+  if (length(observed) != length(expected)) {
+    stop("observed 和 expected 的长度必须相同")
+  }
+  
+  # 检查是否有非正值
+  if (any(observed <= 0) || any(expected <= 0)) {
+    stop("observed 和 expected 必须全为正数")
+  }
+  
+  # 按卡方公式计算统计量
+  chi_square_stat <- sum((observed - expected)^2 / expected)
+  
+  # 自由度
+  df <- length(observed) - 1
+  
+  # 计算 p 值
+  p_value <- pchisq(chi_square_stat, df, lower.tail = FALSE)
+  
+  # 返回结果
+  return(list(
+    statistic = chi_square_stat,
+    df = df,
+    p_value = p_value
+  ))
+}
+# 定义观察值和期望值
+observed <- c(10, 20, 30)
+expected <- c(15, 25, 20)
+
+# 调用快速卡方检验函数
+result <- fast_chisq_test(observed, expected)
+
+# 查看结果
+print(result)
+
+result_original <- chisq.test(x = observed, p = expected / sum(expected), rescale.p = TRUE)
+result_original$statistic
+result_original$p.value
+
+```
+
+
+**8**  Can you make a faster version of table() for the case of an input of two integer vectors with no missing values? Can you use it to speed up your chi-square test?
+
+
+**R代码**
+```{r}
+# 自定义一个快速的 table 函数
+fast_table <- function(x, y) {
+  # 确保输入是整数向量
+  if (!is.integer(x) || !is.integer(y)) {
+    stop("Inputs must be integer vectors.")
+  }
+  # 获取 x 和 y 的唯一值范围
+  ux <- sort(unique(x))
+  uy <- sort(unique(y))
+  # 初始化计数矩阵
+  result <- matrix(0L, nrow = length(ux), ncol = length(uy))
+  # 使用双向索引快速填充计数矩阵
+  for (i in seq_along(x)) {
+    result[match(x[i], ux), match(y[i], uy)] <- result[match(x[i], ux), match(y[i], uy)] + 1L
+  }
+  # 返回结果，带上行列名
+  dimnames(result) <- list(ux, uy)
+  return(result)
+}
+
+# 用于加速卡方检验的实现，包含 P 值计算
+fast_chisq_test <- function(x, y) {
+  # 确保输入是整数向量
+  if (!is.integer(x) || !is.integer(y)) {
+    stop("Inputs must be integer vectors.")
+  }
+  # 生成快速的列联表
+  observed <- fast_table(x, y)
+  # 计算期望频数
+  row_sums <- rowSums(observed)
+  col_sums <- colSums(observed)
+  total <- sum(observed)
+  expected <- outer(row_sums, col_sums) / total
+  # 计算卡方统计量
+  chisq_stat <- sum((observed - expected)^2 / expected)
+  # 计算自由度
+  df <- (nrow(observed) - 1) * (ncol(observed) - 1)
+  # 计算 P 值
+  p_value <- pchisq(chisq_stat, df, lower.tail = FALSE)
+  # 返回结果，包括统计量和 P 值
+  return(list(
+    chisq_stat = chisq_stat,
+    df = df,
+    p_value = p_value
+  ))
+}
+
+# 示例用法
+x <- as.integer(c(1, 2, 1, 2, 1, 3, 2, 3, 3))
+y <- as.integer(c(1, 2, 1, 1, 2, 3, 3, 1, 2))
+
+# 快速计算列联表
+cat("Fast Table Result:\n")
+print(fast_table(x, y))
+
+# 快速计算卡方检验统计量和 P 值
+fast_result <- fast_chisq_test(x, y)
+
+# 打印结果
+cat("\nFast Chi-Square Test Result:\n")
+cat("Chi-Square Statistic:", fast_result$chisq_stat, "\n")
+cat("Degrees of Freedom:", fast_result$df, "\n")
+cat("P-Value:", fast_result$p_value, "\n")
+
+# 验证与标准 chisq.test 的结果是否一致
+cat("\nStandard chisq.test Result:\n")
+chisq_test_result <- chisq.test(fast_table(x, y))
+print(chisq_test_result)
+
+```
+
+
+**HW9**
+
+**1** This example appears in [40]. Consider the bivariate density
+$$
+f(x,y)  \propto\tbinom{n}{x}y^{x+a-1}(1-y)^{n-x+b-1},~~x=0,1,...,n,~0\leq y\leq1.
+$$
+It can be shown (see e.g. [23]) that for fixed $a,b,n,$ the conditional distributions are Binomial($n,y$) and Beta($x+a,n−x+b$). Use the Gibbs sampler to generate a chain with target joint density $f(x,y)$.
+
+**代码**
+```{r}
+set.seed(1212)  # 确保可重复性
+library(Rcpp)
+
+cppFunction('
+#include <Rcpp.h>
+using namespace Rcpp;
+
+// Gibbs 采样器
+// [[Rcpp::export]]
+List gibbs_sampler(int n, double a, double b, int num_iter, double y_init) {
+  // 存储采样结果
+  NumericVector x_samples(num_iter);
+  NumericVector y_samples(num_iter);
+  
+  // 初始化变量
+  double y = y_init;
+  int x = 0;
+  
+  for (int i = 0; i < num_iter; i++) {
+    // 从 Binomial(n, y) 中采样 x | y
+    x = R::rbinom(n, y);
+    
+    // 从 Beta(x + a, n - x + b) 中采样 y | x
+    y = R::rbeta(x + a, n - x + b);
+    
+    // 保存采样结果
+    x_samples[i] = x;
+    y_samples[i] = y;
+  }
+  
+  return List::create(
+    Named("x_samples") = x_samples,
+    Named("y_samples") = y_samples
+  );
+}
+')
+
+# 运行示例
+n <- 10
+a <- 2
+b <- 3
+num_iter <- 1000
+y_init <- 0.5
+
+result <- gibbs_sampler(n, a, b, num_iter, y_init)
+
+# 提取采样结果
+x_samples <- result$x_samples
+y_samples <- result$y_samples
+
+# 绘制采样轨迹
+plot(x_samples, type = "l", col = "blue", main = "X 的采样轨迹")
+plot(y_samples, type = "l", col = "red", main = "Y 的采样轨迹")
+
+```
+
+
+**2** Compare the corresponding generated random numbers with those by the R function you wrote using the function “qqplot”.
+
+
+**R代码**
+```{r}
+
+gibbs_sampler_r <- function(n, a, b, num_iter, y_init) {
+  x_samples <- numeric(num_iter)
+  y_samples <- numeric(num_iter)
+  
+  y <- y_init
+  for (i in 1:num_iter) {
+    # 从 Binomial(n, y) 中采样 x | y
+    x <- rbinom(1, n, y)
+    # 从 Beta(x + a, n - x + b) 中采样 y | x
+    y <- rbeta(1, x + a, n - x + b)
+    
+    x_samples[i] <- x
+    y_samples[i] <- y
+  }
+  
+  list(x_samples = x_samples, y_samples = y_samples)
+}
+
+# 参数设置
+set.seed(1212)  # 确保可重复性
+n <- 10
+a <- 2
+b <- 3
+num_iter <- 1000
+y_init <- 0.5
+
+# 调用 C++ 实现的采样器
+cpp_result <- gibbs_sampler(n, a, b, num_iter, y_init)
+cpp_x_samples <- cpp_result$x_samples
+cpp_y_samples <- cpp_result$y_samples
+
+# 调用 R 实现的采样器
+r_result <- gibbs_sampler_r(n, a, b, num_iter, y_init)
+r_x_samples <- r_result$x_samples
+r_y_samples <- r_result$y_samples
+
+# 比较 x_samples
+qqplot(r_x_samples, cpp_x_samples, main = "QQ Plot of x_samples (R vs C++)", xlab = "R Samples", ylab = "C++ Samples")
+abline(0, 1, col = "red")
+
+# 比较 y_samples
+qqplot(r_y_samples, cpp_y_samples, main = "QQ Plot of y_samples (R vs C++)", xlab = "R Samples", ylab = "C++ Samples")
+abline(0, 1, col = "blue")
+```
+
+
+**3** Campare the computation time of the two functions with the function “microbenchmark”.
+ 
+
+**R代码**
+```{r}
+# 加载必要的包
+library(microbenchmark)
+
+
+# 使用 microbenchmark 比较计算时间
+benchmark_result <- microbenchmark(
+  Cpp = gibbs_sampler(n, a, b, num_iter, y_init),
+  R = gibbs_sampler_r(n, a, b, num_iter, y_init),
+  times = 10
+)
+
+
+# 显示运行时间结果
+print(benchmark_result)
+
+# 绘制时间比较图
+boxplot(benchmark_result, main = "Gibbs Sampler Performance (C++ vs R)", 
+        ylab = "Execution Time (ms)", col = c("lightblue", "lightgreen"))
+```
+
+
+**4** Comments your results.
+
+**答** 从输出结果（QQ图）来看，C++和R的运行结果差不多；从运行时间来看，C++几乎比R快十倍，运行时间显著地低于R实现，这是因为C++是编译型语言，运行时直接执行底层机器指令，而R是解释型语言，循环中的操作需要逐行解析和执行，效率较低；另外，从箱型图可以看出，C++实现的采样器运行时间短，而且比较稳定，时间波动更小。说明对于高迭代次数或需要高性能的采样任务，使用 C++ 实现可以显著提高效率。
+
+

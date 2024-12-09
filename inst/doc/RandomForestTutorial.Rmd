@@ -1,0 +1,132 @@
+---
+title: "Random Forest Package Usage"
+author: "Minlong Xie"
+date: "2024-12-08"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Random Forest Package Usage}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 简介
+
+本教程演示了如何使用 `SA24204128` 在 R 中构建和使用随机森林分类器。我们将介绍如何训练一个决策树、训练一个随机森林，并使用训练好的模型进行预测。
+
+## 安装
+
+要安装该包，可以运行以下命令：
+
+```{r}
+library(SA24204128)
+#install.packages("SA24204128")
+```
+
+训练单棵决策树
+决策树是随机森林的基本组成部分。首先，我们将通过 decision_tree_train 函数来训练一棵决策树。
+
+示例：训练一棵决策树
+```{r}
+# 加载 iris 数据集
+data(iris)
+
+# 训练一棵决策树
+tree <- decision_tree_train(iris, target = "Species", max_depth = 5)
+
+# 打印决策树结构
+print(tree)
+```
+
+decision_tree_train 函数根据提供的数据集（这里是 iris 数据集）和目标变量（Species）来训练一棵决策树。树的深度通过 max_depth 参数进行限制。
+
+函数解释
+decision_tree_train 函数通过递归分裂来构建决策树。在每个节点，它选择最好的特征来进行分裂（通常使用 Gini 不纯度来选择），并在达到最大深度或其他停止条件时停止。
+
+训练随机森林
+现在我们已经训练了一棵决策树，接下来我们将使用 randomForest_train 函数来训练一个随机森林。随机森林是由多棵决策树组成的集成学习方法。
+
+示例：训练随机森林
+```{r}
+# 训练一个包含 100 棵树的随机森林
+forest <- randomForest_train(iris, target = "Species", n_trees = 100, max_depth = 5)
+
+for (i in 1:min(3, length(forest))) {  # 打印最多前 3 棵树
+  cat("Tree", i, "Root Node:\n")
+  print(forest[[i]])  # 打印根节点
+  cat("\n")
+}
+```
+
+在这个示例中，我们训练了一个包含 100 棵树的随机森林。每棵树使用了数据的 bootstrap 样本，并且在每个节点分裂时随机选择特征。
+
+函数解释
+randomForest_train 函数接受输入数据，训练指定数量的决策树（n_trees）。每棵树基于数据的自助法采样（bootstrapping），并在每个节点的分裂时使用随机的特征子集（mtry）。这种随机性使得随机森林比单棵决策树更具鲁棒性，能够减少过拟合。
+
+使用随机森林进行预测
+训练好随机森林后，我们可以使用 randomForest_predict 函数在新的数据上进行预测。该函数通过投票机制汇总所有决策树的预测结果，给出最终的分类预测。
+
+
+```{r}
+# 加载必要包
+library(randomForest)  # 或者 library(ranger)
+
+# 加载 iris 数据集
+data(iris)
+
+# 数据集划分
+set.seed(14634)  # 设置随机种子以保证可重复性
+train_indices <- sample(1:nrow(iris), 0.7 * nrow(iris))  # 70% 用于训练
+train_data <- iris[train_indices, ]
+test_data <- iris[-train_indices, ]
+
+# 1. 使用SA24204128
+# 测量训练时间
+time_custom_train <- system.time({
+  forest_custom <- randomForest_train(train_data, target = "Species", n_trees = 100, max_depth = 10)
+})
+
+# 测量预测时间
+time_custom_predict <- system.time({
+  predictions_custom <- randomForest_predict(forest_custom, test_data[, -5])
+})
+
+# 计算准确性
+accuracy_custom <- mean(predictions_custom == test_data$Species)
+
+# 2. 使用 randomForest 包
+# 测量训练时间
+time_rf_train <- system.time({
+  forest_rf <- randomForest(Species ~ ., data = train_data, ntree = 100, maxnodes = 10)
+})
+
+# 测量预测时间
+time_rf_predict <- system.time({
+  predictions_rf <- predict(forest_rf, test_data[, -5])
+})
+
+# 计算准确性
+accuracy_rf <- mean(predictions_rf == test_data$Species)
+
+# 3. 输出对比结果
+results <- data.frame(
+  Method = c("Custom Random Forest", "randomForest Package"),
+  Training_Time = c(time_custom_train["elapsed"], time_rf_train["elapsed"]),
+  Prediction_Time = c(time_custom_predict["elapsed"], time_rf_predict["elapsed"]),
+  Accuracy = c(accuracy_custom, accuracy_rf)
+)
+
+print(results)
+
+```
+
+
+结论
+在本教程中，我们演示了如何：
+
+使用 decision_tree_train 函数训练一棵决策树。
+使用 randomForest_train 函数构建一个随机森林。
+使用训练好的随机森林通过 randomForest_predict 进行预测。
+随机森林是一种强大的分类工具，结合了多棵决策树的优势。通过集成多个决策树，随机森林模型通常比单棵决策树更具鲁棒性，能够有效减少过拟合。
+
+
+

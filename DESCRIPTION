@@ -1,0 +1,17 @@
+Package: SA24204128
+Type: Package
+Title: Example functions for 'Statistical Computing' course
+Version: 1.0
+Date: 2024-12-02
+Author: Minlong Xie
+Maintainer: Minlong Xie <2729058225@qq.com>
+Description: Several R and Rcpp function are included in this package for illustration. 
+License: GPL (>= 2)
+Imports: Rcpp, microbenchmark
+LinkingTo: Rcpp
+RoxygenNote: 7.3.2
+Encoding: UTF-8
+VignetteBuilder: knitr
+Suggests: knitr, rmarkdown
+URL: http://github.com/xmlustc/SA24204128
+BugReports: http://github.com/xmlustc/SA24204128/issues
